@@ -1,0 +1,37 @@
+name: CI Pipeline
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest
+        
+    - name: Run basic tests
+      run: |
+        python -m pytest tests/test_ci.py -v
+        
+    - name: Verify project structure
+      run: |
+        echo "Проверка структуры проекта:"
+        ls -la
+        echo "---"
+        ls -la app/
+        echo "---"
+        [ -f "Dockerfile" ] && echo "✅ Dockerfile существует" || echo "❌ Dockerfile не найден"
+        [ -f "docker-compose.yml" ] && echo "✅ docker-compose.yml существует" || echo "❌ docker-compose.yml не найден"
+        [ -f "requirements.txt" ] && echo "✅ requirements.txt существует" || echo "❌ requirements.txt не найден"
