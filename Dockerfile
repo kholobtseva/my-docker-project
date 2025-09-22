@@ -1,3 +1,5 @@
+# My Python Script for MOEX ISS API
+# Automatically built with GitHub Actions CI/CD
 FROM python:3.9
 
 # Устанавливаем зависимости для PostgreSQL и ODBC
