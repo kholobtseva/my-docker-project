@@ -25,9 +25,9 @@ docker-compose up --build
 docker-compose up --build -d
 
 ### Доступ к интерфейсам:
-### Kibana (визуализация): http://localhost:5601
-### Elasticsearch (данные): http://localhost:9200  
-### PostgreSQL (БД): localhost:5432
+- Kibana (визуализация): http://localhost:5601
+- Elasticsearch (данные): http://localhost:9200  
+- PostgreSQL (БД): localhost:5432
 
 ## Технологии
 
@@ -99,6 +99,7 @@ pytest tests/ -v
 ### Запустить конкретные тесты
 pytest tests/test_ci.py -v
 pytest tests/test_simple.py -v
+
 
 
 
