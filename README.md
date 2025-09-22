@@ -9,7 +9,7 @@ Python-скрипт для сбора данных с **MOEX ISS API** и сох
 - Docker-контейнеризация приложения
 
 ## Как запустить
-```bash
+
 git clone https://github.com/kholobtseva/my-docker-project.git
 cd my-docker-project
 docker-compose up --build
