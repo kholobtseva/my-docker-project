@@ -14,7 +14,7 @@ git clone https://github.com/kholobtseva/my-docker-project.git
 cd my-docker-project
 docker-compose up --build
 
-## 🛠 Технологии
+### 1. Textологии
 
 **Backend:**
 - ![Python](https://img.shields.io/badge/Python-3.9-blue?logo=python)
@@ -23,7 +23,7 @@ docker-compose up --build
 - ![Docker Compose](https://img.shields.io/badge/Docker_Compose-✓-blue?logo=docker)
 
 **API:**
-- ![MOEX ISS API](https://img.shields.io/badge/MOEX_ISS_API-✓-orange)
+- ![M0EX ISS API](https://img.shields.io/badge/M0EX_ISS_API-✓-orange)
 
 **Инструменты:**
 - ![Git](https://img.shields.io/badge/Git-✓-lightgrey?logo=git)
