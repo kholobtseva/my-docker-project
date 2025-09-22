@@ -14,17 +14,17 @@ git clone https://github.com/kholobtseva/my-docker-project.git
 cd my-docker-project
 docker-compose up --build
 
-### 1. Textологии
+## Технологии
 
-**Backend:**
-- ![Python](https://img.shields.io/badge/Python-3.9-blue?logo=python)
-- ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue?logo=postgresql)
-- ![Docker](https://img.shields.io/badge/Docker-✓-blue?logo=docker)
-- ![Docker Compose](https://img.shields.io/badge/Docker_Compose-✓-blue?logo=docker)
+**Backend:**  
+<img src="https://img.shields.io/badge/Python-3.9-blue?logo=python" alt="Python"> 
+<img src="https://img.shields.io/badge/PostgreSQL-15-blue?logo=postgresql" alt="PostgreSQL"> 
+<img src="https://img.shields.io/badge/Docker-✓-blue?logo=docker" alt="Docker"> 
+<img src="https://img.shields.io/badge/Docker_Compose-✓-blue?logo=docker" alt="Docker Compose">
 
-**API:**
-- ![M0EX ISS API](https://img.shields.io/badge/M0EX_ISS_API-✓-orange)
+**API:**  
+<img src="https://img.shields.io/badge/MOEX_ISS_API-✓-orange" alt="MOEX ISS API">
 
-**Инструменты:**
-- ![Git](https://img.shields.io/badge/Git-✓-lightgrey?logo=git)
-- ![GitHub](https://img.shields.io/badge/GitHub-✓-lightgrey?logo=github)
+**Инструменты:**  
+<img src="https://img.shields.io/badge/Git-✓-lightgrey?logo=git" alt="Git"> 
+<img src="https://img.shields.io/badge/GitHub-✓-lightgrey?logo=github" alt="GitHub">
