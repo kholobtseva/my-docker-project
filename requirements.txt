@@ -4,3 +4,4 @@ pyodbc==5.1.0
 python-dateutil==2.8.2
 psycopg2-binary==2.9.9
 pytest==8.4.2
+elasticsearch==7.17.0

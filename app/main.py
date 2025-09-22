@@ -1,3 +1,5 @@
+import logging
+import sys
 import os
 import time
 from datetime import timezone
@@ -7,6 +9,25 @@ import psycopg2  # Меняем pyodbc на psycopg2
 import csv
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import *
+from elasticsearch import Elasticsearch
+
+es = Elasticsearch(['http://elasticsearch:9200'])
+
+def send_to_elasticsearch(data, index_name):
+    try:
+        es.index(index=index_name, body=data)
+        logger.info(f"Data sent to Elasticsearch index: {index_name}")
+    except Exception as e:
+        logger.error(f"Error sending to Elasticsearch: {e}")
+
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+logger = logging.getLogger(__name__)
+
 
 # Настройки подключения к БД из переменных окружения
 DB_CONFIG = {
@@ -48,12 +69,14 @@ def get_data_json(url, i):
                 'formatted_date': formatted_date
             })
     except requests.exceptions.RequestException as er:
-        print('Network error:', er)
+        #print('Network error:', er)
+        logger.error('Network error: %s', er)
         health_status = 0
         to_log_file('\nNetwork error!\n')
         set_status_robot(1012, health_status, '')
     except ValueError as err:
-        print('\nError:', err)
+        #print('\nError:', err)
+        logger.error('ValueError: %s', err)
         health_status = 0
         to_log_file('\nNo data available for the requested date\n')
     return data
@@ -82,19 +105,21 @@ def insert_record_if_not_exists():
                 # Вставка новой записи
                 cursor.execute("INSERT INTO public.www_data_idx (id, mask, name_rus, name_eng, source, url, descr, date_upd) VALUES (%s, NULL, 'Железная руда 62% Fe', %s, 'ore_futures', 'https://api.sgx.com/derivatives/v1.0/history/symbol/', NULL, %s)",
                                (new_id, name, current_date))
-                print("Запись была успешно добавлена")
+                logger.info("Запись была успешно добавлена")
 
         conn.commit()
 
     except (Exception, psycopg2.Error) as error:
-        print("Ошибка при работе с PostgreSQL", error)
+        #print("Ошибка при работе с PostgreSQL", error)
+        logger.error("Ошибка при работе с PostgreSQL: %s", error)
 
     finally:
         # Закрываем соединение с базой данных
         if conn:
             cursor.close()
             conn.close()
-            print("Соединение с PostgreSQL закрыто")
+            #print("Соединение с PostgreSQL закрыто")
+            logger.info("Соединение с PostgreSQL закрыто")
 
 class SetInformation():
     @staticmethod
@@ -140,8 +165,10 @@ def set_status_robot(id, health_status, add_text):
 
     except psycopg2.DatabaseError as e:
         print("Error at execute:")
-        print(query)
-        print(e)
+        #print(query)
+        logger.error("Error at execute query: %s", query)
+        #print(e)
+        logger.error("Database error: %s", e)
 
     finally:
         if cursor:
@@ -155,6 +182,54 @@ def get_current_date():
     current_time = datetime.now(timezone.utc) + timedelta(hours=3)
     return current_time.strftime("%Y-%m-%d %H:%M:%S MSK") + '\n'
     #return str(datetime.fromtimestamp(int(time.time()))) + '\n'
+    
+    
+def sync_to_elasticsearch():
+    """Автоматическая синхронизация данных с Elasticsearch"""
+    try:
+        
+        import psycopg2
+        
+        logger.info("Начинаем синхронизацию с Elasticsearch...")
+        
+       
+        # Подключение к PostgreSQL
+        conn = psycopg2.connect(**DB_CONFIG)
+        cursor = conn.cursor()
+        
+        # Выбираем данные из таблицы
+        cursor.execute("""
+            SELECT am.id_value, am.date_val, am.avg_val, am.volume, am.currency,
+                   wdi.name_eng, wdi.name_rus
+            FROM agriculture_moex am
+            JOIN www_data_idx wdi ON am.id_value = wdi.id
+        """)
+        
+        synced_count = 0
+        for row in cursor.fetchall():
+            doc = {
+                'id_value': row[0],
+                'date': row[1].isoformat(),
+                'price': float(row[2]) if row[2] else None,
+                'volume': float(row[3]) if row[3] else None,
+                'currency': row[4],
+                'contract': row[5],
+                'name_rus': row[6],
+                'source': 'moex_sgx',
+                'sync_timestamp': datetime.now().isoformat()
+            }
+            
+            # Отправляем в Elasticsearch
+            es.index(index='agriculture-data', document=doc)
+            synced_count += 1
+        
+        logger.info(f"Синхронизация завершена! Обработано записей: {synced_count}")
+        
+        cursor.close()
+        conn.close()
+        
+    except Exception as e:
+        logger.error(f"Ошибка синхронизации с Elasticsearch: {e}")
 
 # Основной код
 interval  = '1w' #'3y'
@@ -205,11 +280,13 @@ try:
                         data = []
 
                     except IndexError:
-                        print('An IndexError occurred when processing data:', data)
+                        #print('An IndexError occurred when processing data:', data)
+                        logger.error('An IndexError occurred when processing data: %s', data)
                         health_status = 0
 
             except Exception as e:
-                print(f"Exception: {e}")
+                #print(f"Exception: {e}")
+                logger.error("Exception: %s", e)
                 health_status = 0
                 continue
 
@@ -218,11 +295,14 @@ try:
     conn.close()
 
     to_log_file("\nFINISH RUN SCRIPT\n", True)
-    print(health_status)
+    #print(health_status)
+    logger.info("Health status: %s", health_status)
     set_status_robot(1012, health_status, '')
+    sync_to_elasticsearch()
 
 except psycopg2.DatabaseError as e:
     health_status = 0
     to_log_file("\nConnect to DB PostgreSQL:  NO!!!\n", True)
     to_log_file(str(e), True)
     set_status_robot(1012, health_status, '')
+    
