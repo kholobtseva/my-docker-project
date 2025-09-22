@@ -1,4 +1,4 @@
-# My Python Script for MOEX ISS API
+# My Python Script for Singapore Exchange
 # Automatically built with GitHub Actions CI/CD
 FROM python:3.9
 
