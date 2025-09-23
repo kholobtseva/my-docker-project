@@ -2,6 +2,7 @@ import json
 import logging
 import csv
 import os
+import time
 from datetime import datetime
 from kafka import KafkaConsumer
 
@@ -60,12 +61,12 @@ def run_consumer():
         consumer = KafkaConsumer(
             'market-data',
             bootstrap_servers=['kafka:9092'],
-            auto_offset_reset='earliest',
+            auto_offset_reset='latest',  # ← ИЗМЕНИЛ НА LATEST
             value_deserializer=lambda m: json.loads(m.decode('utf-8')),
             group_id='csv_writer_group'
         )
         
-        logger.info("✅ Kafka consumer запущен и слушает топик 'market-data'")
+        logger.info("✅ Kafka consumer запущен и ожидает новые сообщения...")
         
         # Создаем CSV файл с заголовком при первом запуске
         csv_file = '/app/logs/kafka_messages.csv'
@@ -80,6 +81,8 @@ def run_consumer():
                 writer.writerow(headers)
         
         message_count = 0
+        
+        # Бесконечный цикл ожидания сообщений
         for message in consumer:
             data = message.value
             message_count += 1
@@ -100,6 +103,8 @@ def run_consumer():
             else:
                 logger.error(f"❌ Ошибка сохранения сообщения #{message_count}")
                 
+    except KeyboardInterrupt:
+        logger.info("🛑 Consumer остановлен пользователем")
     except Exception as e:
         logger.error(f"❌ Ошибка consumer: {e}")
 

@@ -63,14 +63,21 @@ services:
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
     depends_on:
       - zookeeper
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--list", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
       
   kafka-consumer:
     build: .
     command: python app/kafka_consumer.py
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     volumes:
       - .:/app
+    restart: unless-stopped
       
   kafdrop:
     image: obsidiandynamics/kafdrop
