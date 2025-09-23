@@ -33,10 +33,13 @@ class CustomJSONEncoder(json.JSONEncoder):
         return super().default(obj)
 
 try:
+   
     producer = KafkaProducer(
-        bootstrap_servers=['kafka:9092'],
-        value_serializer=lambda v: json.dumps(v, cls=CustomJSONEncoder).encode('utf-8')
-    )
+    bootstrap_servers=['kafka:9092'],
+    value_serializer=lambda v: json.dumps(v, ensure_ascii=False, cls=CustomJSONEncoder).encode('utf-8')
+)
+    
+    
     logger.info("✅ Kafka producer инициализирован")
 except Exception as e:
     logger.warning(f"⚠️ Не удалось подключиться к Kafka: {e}")
