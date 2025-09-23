@@ -10,15 +10,9 @@ import csv
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import *
 from elasticsearch import Elasticsearch
+from kafka import KafkaProducer
+from decimal import Decimal
 
-es = Elasticsearch(['http://elasticsearch:9200'])
-
-def send_to_elasticsearch(data, index_name):
-    try:
-        es.index(index=index_name, body=data)
-        logger.info(f"Data sent to Elasticsearch index: {index_name}")
-    except Exception as e:
-        logger.error(f"Error sending to Elasticsearch: {e}")
 
 # Настройка логирования
 logging.basicConfig(
@@ -27,6 +21,56 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)]
 )
 logger = logging.getLogger(__name__)
+
+es = Elasticsearch(['http://elasticsearch:9200'])
+
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (Decimal,)):
+            return float(obj)
+        elif isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        return super().default(obj)
+
+try:
+    producer = KafkaProducer(
+        bootstrap_servers=['kafka:9092'],
+        value_serializer=lambda v: json.dumps(v, cls=CustomJSONEncoder).encode('utf-8')
+    )
+    logger.info("✅ Kafka producer инициализирован")
+except Exception as e:
+    logger.warning(f"⚠️ Не удалось подключиться к Kafka: {e}")
+    producer = None
+
+def send_to_elasticsearch(data, index_name):
+    try:
+        es.index(index=index_name, body=data)
+        logger.info(f"Data sent to Elasticsearch index: {index_name}")
+        if producer is not None:
+            producer.flush(timeout=30)
+    except Exception as e:
+        logger.error(f"Error sending to Elasticsearch: {e}")
+
+def send_to_kafka(data):
+    if producer is not None:
+        try:
+            # Создаем копию данных и преобразуем Decimal в float
+            kafka_data = data.copy()
+            
+            # Преобразуем все Decimal значения в float
+            for key, value in kafka_data.items():
+                if isinstance(value, Decimal):
+                    kafka_data[key] = float(value)
+            
+            # Убедимся что data - это dict
+            if isinstance(kafka_data, dict):
+                future = producer.send('market-data', value=kafka_data)
+                future.get(timeout=10)
+                logger.info(f"✅ Данные отправлены в Kafka: {kafka_data.get('contract', 'Unknown')} - {kafka_data.get('date', 'No date')}")
+            else:
+                logger.warning(f"⚠️ Неверный формат данных для Kafka: {type(kafka_data)} - {str(kafka_data)[:100]}")
+        except Exception as e:
+            logger.warning(f"⚠️ Ошибка отправки в Kafka: {e}")
 
 
 # Настройки подключения к БД из переменных окружения
@@ -221,8 +265,10 @@ def sync_to_elasticsearch():
             
             # Отправляем в Elasticsearch
             es.index(index='agriculture-data', document=doc)
+            
+            send_to_kafka(doc)
             synced_count += 1
-        
+            
         logger.info(f"Синхронизация завершена! Обработано записей: {synced_count}")
         
         cursor.close()
@@ -230,6 +276,9 @@ def sync_to_elasticsearch():
         
     except Exception as e:
         logger.error(f"Ошибка синхронизации с Elasticsearch: {e}")
+
+
+
 
 # Основной код
 interval  = '1w' #'3y'
@@ -299,6 +348,7 @@ try:
     logger.info("Health status: %s", health_status)
     set_status_robot(1012, health_status, '')
     sync_to_elasticsearch()
+    
 
 except psycopg2.DatabaseError as e:
     health_status = 0
