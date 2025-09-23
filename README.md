@@ -49,9 +49,9 @@ Python-скрипт для сбора данных с **Singapore Exchange** и 
 
 ## Как запустить
 
-git clone https://github.com/kholobtseva/my-docker-project.git
-cd my-docker-project
-docker-compose up --build
+- git clone https://github.com/kholobtseva/my-docker-project.git
+- cd my-docker-project
+- docker-compose up --build
 
 # Запуск полного стека
 docker-compose up --build -d
@@ -139,8 +139,9 @@ pip install -r requirements.txt
 pytest tests/ -v
 
 ### Запустить конкретные тесты
-pytest tests/test_ci.py -v
-pytest tests/test_simple.py -v
+- pytest tests/test_ci.py -v
+- pytest tests/test_simple.py -v
+
 
 
 
