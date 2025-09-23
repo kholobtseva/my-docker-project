@@ -61,6 +61,7 @@ docker-compose up --build -d
 - Elasticsearch (данные): http://localhost:9200  
 - PostgreSQL (БД): http://localhost:5432
 - Kafka (брокер): http://localhost:9092
+- Kafdrop (брокер): http://localhost:9000
 
 ## Технологии
 
@@ -70,10 +71,14 @@ docker-compose up --build -d
 <img src="https://img.shields.io/badge/Docker-✓-blue?logo=docker" alt="Docker"> 
 <img src="https://img.shields.io/badge/Docker_Compose-✓-blue?logo=docker" alt="Docker Compose">
 
+**UI Tools:**  
+<img src="https://img.shields.io/badge/Kafdrop-✓-lightblue?logo=apachekafka" alt="Kafdrop">
+
 ## Monitoring & Analytics:
 <img src="https://img.shields.io/badge/Elasticsearch-7.17.0-green?logo=elasticsearch" alt="Elasticsearch">
 <img src="https://img.shields.io/badge/Kibana-7.17.0-green?logo=kibana" alt="Kibana">
 <img src="https://img.shields.io/badge/Apache_Kafka-✓-green?logo=apachekafka" alt="Kafka">
+<img src="https://img.shields.io/badge/Kafdrop-✓-green?logo=apachekafka" alt="Kafdrop">
 
 ## Message Broker:
 <img src="https://img.shields.io/badge/Kafka_Producer-✓-orange" alt="Kafka Producer">
@@ -141,6 +146,7 @@ pytest tests/ -v
 ### Запустить конкретные тесты
 - pytest tests/test_ci.py -v
 - pytest tests/test_simple.py -v
+
 
 
 
