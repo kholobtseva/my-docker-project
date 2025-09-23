@@ -41,6 +41,7 @@ logs/
 *.iws
 *.iml
 *.ipr
+.run/
 
 # Docker
 docker-compose.override.yml
