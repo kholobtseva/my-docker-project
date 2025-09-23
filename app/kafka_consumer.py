@@ -61,7 +61,7 @@ def run_consumer():
         consumer = KafkaConsumer(
             'market-data',
             bootstrap_servers=['kafka:9092'],
-            auto_offset_reset='latest',  # ← ИЗМЕНИЛ НА LATEST
+            auto_offset_reset='latest',
             value_deserializer=lambda m: json.loads(m.decode('utf-8')),
             group_id='csv_writer_group'
         )
