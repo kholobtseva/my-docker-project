@@ -19,11 +19,13 @@ def save_to_csv(data, filename='kafka_messages.csv'):
         filepath = os.path.join(log_dir, filename)
         file_exists = os.path.isfile(filepath)
         
-        with open(filepath, 'a', newline='', encoding='utf-8') as f:
+        mode = 'a' if os.path.exists(filepath) else 'w'
+        
+        with open(filepath, mode, newline='', encoding='utf-8') as f:
             writer = csv.writer(f, delimiter=';')
             
             # Записываем заголовок если файл новый
-            if not file_exists:
+            if mode == 'w':
                 headers = [
                     'kafka_timestamp', 'message_offset', 'message_count',
                     'contract', 'date', 'price', 'volume', 'currency',
