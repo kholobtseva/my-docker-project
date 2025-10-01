@@ -35,3 +35,7 @@ jobs:
         [ -f "Dockerfile" ] && echo "✅ Dockerfile существует" || echo "❌ Dockerfile не найден"
         [ -f "docker-compose.yml" ] && echo "✅ docker-compose.yml существует" || echo "❌ docker-compose.yml не найден"
         [ -f "requirements.txt" ] && echo "✅ requirements.txt существует" || echo "❌ requirements.txt не найден"
+        
+    - name: Test Docker build
+      run: |
+        docker build -t my-python-script:ci-test .
