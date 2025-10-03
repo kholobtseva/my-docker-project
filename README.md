@@ -74,8 +74,8 @@ docker-compose up --build -d
 - Elasticsearch (данные): http://localhost:9200  
 - PostgreSQL (БД): http://localhost:5432
 - Kafka (брокер): http://localhost:9092
-- Kafdrop (брокер): http://localhost:9000
-- AKHQ (управление + тестирование): http://localhost:8080
+- Kafdrop (мониторинг): http://localhost:9000
+- AKHQ (управление и тестирование): http://localhost:8080
 
 ## Технологии
 
@@ -86,8 +86,8 @@ docker-compose up --build -d
 <img src="https://img.shields.io/badge/Docker_Compose-✓-blue?logo=docker" alt="Docker Compose">
 
 **UI Tools:**  
-<img src="https://img.shields.io/badge/Kafdrop-✓-lightblue?logo=apachekafka" alt="Kafdrop">
-<img src="https://img.shields.io/badge/AKHQ-✓-lightblue?logo=apachekafka" alt="AKHQ">
+<img src="https://img.shields.io/badge/Kafdrop-✓-lightblue?logo=apachekafka" alt="Kafdrop"> *(мониторинг)*
+<img src="https://img.shields.io/badge/AKHQ-✓-lightblue?logo=apachekafka" alt="AKHQ"> *(управление + тестирование)*
 
 ## Monitoring & Analytics:
 <img src="https://img.shields.io/badge/Elasticsearch-7.17.0-green?logo=elasticsearch" alt="Elasticsearch">
@@ -195,6 +195,7 @@ json
 
 Проект задуман как учебный стенд: сначала реализован базовый пайплайн (сбор → обработка → хранение → визуализация).  
 Дальнейшее развитие — постепенное расширение QA-практиками
+
 
 
 
