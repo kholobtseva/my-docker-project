@@ -9,6 +9,12 @@ from kafka import KafkaConsumer
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+def normalize_value(value, default=''):
+    """Нормализует значение - тримминг и приведение к строке"""
+    if value is None:
+        return default
+    return str(value).strip()
+
 def validate_payload(payload):
     """Валидация обязательных полей в payload"""
     if not payload:
@@ -29,7 +35,7 @@ def validate_payload(payload):
     return True
 
 def save_to_csv(data, filename='kafka_messages.csv'):
-    """Сохраняет данные в CSV файл с валидацией"""
+    """Сохраняет данные в CSV файл с валидацией и нормализацией"""
     try:
         log_dir = '/app/logs'
         if not os.path.exists(log_dir):
@@ -43,39 +49,42 @@ def save_to_csv(data, filename='kafka_messages.csv'):
             logger.error("❌ Некорректный payload, пропускаем сообщение")
             return False
         
-        # Безопасное определение режима
-        try:
-            file_exists = os.path.isfile(filepath)
-            mode = 'a' if file_exists else 'w'
-        except OSError as e:
-            logger.error(f"❌ Ошибка доступа к файлу: {e}")
+        # Улучшенная проверка файла - всегда пишем заголовки для пустого файла
+        file_exists = os.path.isfile(filepath)
+        if file_exists:
+            # Проверяем не пустой ли файл
+            is_empty = os.path.getsize(filepath) == 0
+            mode = 'a' if not is_empty else 'w'
+        else:
             mode = 'w'
+            is_empty = True
         
         with open(filepath, mode, newline='', encoding='utf-8') as f:
             writer = csv.writer(f, delimiter=';')
             
-            # Записываем заголовок если файл новый
-            if mode == 'w':
+            # Записываем заголовок если файл новый ИЛИ пустой
+            if mode == 'w' or is_empty:
                 headers = [
                     'kafka_timestamp', 'message_offset', 'message_count',
                     'contract', 'date', 'price', 'volume', 'currency',
                     'name_rus', 'source', 'sync_timestamp'
                 ]
                 writer.writerow(headers)
+                logger.info("📄 Заголовки CSV записаны")
             
-            # Безопасное извлечение данных с значениями по умолчанию
+            # Нормализованное извлечение данных
             row = [
-                data.get('kafka_timestamp', datetime.now().isoformat()),
-                data.get('message_offset', ''),
-                data.get('message_count', ''),
-                payload.get('contract', 'MISSING'),
-                payload.get('date', 'MISSING'),
-                payload.get('price', 'MISSING'),
-                payload.get('volume', ''),
-                payload.get('currency', ''),
-                payload.get('name_rus', ''),
-                payload.get('source', ''),
-                payload.get('sync_timestamp', datetime.now().isoformat())  # дефолтное значение
+                normalize_value(data.get('kafka_timestamp'), datetime.now().isoformat()),
+                normalize_value(data.get('message_offset')),
+                normalize_value(data.get('message_count')),
+                normalize_value(payload.get('contract'), 'MISSING'),
+                normalize_value(payload.get('date'), 'MISSING'),
+                normalize_value(payload.get('price'), 'MISSING'),
+                normalize_value(payload.get('volume')),
+                normalize_value(payload.get('currency')),
+                normalize_value(payload.get('name_rus')),
+                normalize_value(payload.get('source')),
+                normalize_value(payload.get('sync_timestamp'), datetime.now().isoformat())
             ]
             
             writer.writerow(row)
@@ -129,16 +138,13 @@ def run_consumer():
         
         # Создаем CSV файл с заголовком при первом запуске
         csv_file = '/app/logs/kafka_messages.csv'
-        if not os.path.exists(csv_file):
-            with open(csv_file, 'w', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f, delimiter=';')
-                headers = [
-                    'kafka_timestamp', 'message_offset', 'message_count',
-                    'contract', 'date', 'price', 'volume', 'currency',
-                    'name_rus', 'source', 'sync_timestamp'
-                ]
-                writer.writerow(headers)
-            logger.info("📄 Создан новый CSV файл с заголовком")
+        try:
+            # Удаляем старый файл чтобы создать новый с заголовками
+            if os.path.exists(csv_file):
+                os.remove(csv_file)
+                logger.info("🗑️ Удален старый CSV файл для создания нового с заголовками")
+        except Exception as e:
+            logger.warning(f"⚠️ Не удалось удалить старый CSV: {e}")
         
         message_count = 0
         
