@@ -1,6 +1,6 @@
 # Test Cases: Kafka Data Pipeline
 
-## Smoke Tests
+## Smoke & Integration Tests
 
 ### TC-KAFKA-001: Basic Kafka Connectivity
 **Priority:** High  
@@ -133,6 +133,7 @@
 - В логах нет ошибок валидации
 
 Status: ✅ Manual
+
 ---
 ### TC-KAFKA-06: Invalid Date Format Handling
 **Priority:** High  
@@ -156,6 +157,7 @@ Status: ✅ Manual
 - Некорректные данные не сохраняются в CSV
 
 Status: ✅ Manual
+
 ---
 ### TC-KAFKA-07: Required Field Validation
 **Priority:** High  
@@ -276,3 +278,4 @@ Status: ✅ Manual
 - Система не подвержена SQL-инъекциям или XSS атакам
 
 Status: ✅ Manual
+
