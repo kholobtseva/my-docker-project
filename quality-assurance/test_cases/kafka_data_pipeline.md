@@ -125,24 +125,56 @@
 - Пайплайн данных функционирует нормально
 
 **Test Steps:**
-1. Остановить Kafka брокер: `docker-compose stop kafka`.  
+1. Остановить Kafka брокер:
+    ```bash
+    docker-compose stop kafka
+    ```
    ER: Kafka контейнер останавливается
-2. Просмотреть логи producer: `docker-compose logs python-script --tail=20`.  
-   ER: В логах присутствуют сообщения об ошибках подключения к Kafka
-3. Проверить наличие в логах следующих сообщений об ошибках:  
+2. Запустить python-script при недоступном Kafka:
+   ```bash
+   docker-compose up python-script
+   ```
+   ER: Скрипт запускается, но не может подключиться к Kafka  
+3. Просмотреть логи producer:  
+    ```bash
+    docker-compose logs python-script --tail=20
+    ```  
+   ER: В логах присутствуют сообщения об ошибках подключения к Kafka  
+4. Проверить наличие в логах следующих сообщений об ошибках:  
    - "Не удалось подключиться к Kafka"
    - "Kafka connection error" 
    - "NoBrokersAvailable"
-   - "Failed to connect to Kafka".
+   - "Failed to connect to Kafka".  
    ER: Хотя бы одно из сообщений об ошибках найдено в логах
-4. Запустить Kafka обратно: `docker-compose start kafka`.  
-   ER: Kafka контейнер запускается
-5. Подождать 30 секунд для восстановления соединения.  
+5. Запустить Kafka:
+    ```bash
+    docker-compose start kafka
+    ```
+   ER: Kafka контейнер запускается  
+6. Подождать 30 секунд для восстановления соединения.
+   ```bash
+   sleep 30
+   ```    
    ER: Соединение восстанавливается в течение 30 секунд
-6. Отправить тестовое сообщение через AKHQ.  
+   
+7. Отправить тестовое сообщение через AKHQ.
+   ```json
+   {"id_value": 1001, "date": "2025-10-04", "price": 155.50, "contract": "RECOVERY_TEST ", "name_rus": "Kafka Recovery Test", "source": "recovery_test", "volume": 500, "currency": "USD"}
+   ```
+    
    ER: Сообщение успешно отправляется в топик
-7. Проверить что consumer обработал сообщение: `docker-compose logs kafka-consumer --tail=10`.  
+8. Проверить что consumer обработал сообщение:
+     ```bash
+     docker-compose logs kafka-consumer --tail=10
+     ```
    ER: В логах consumer присутствует запись об обработке нового сообщения
+
+  **Evidence:** 
+- `TC-KAFKA-004_step1_kafka_stopped.jpg` - Подтверждение остановки Kafka контейнера
+- `TC-KAFKA-004_step2_producer_errors.txt` - Логи producer с ошибками подключения при недоступности Kafka
+- `TC-KAFKA-004_step4_kafka_started.jpg` - Подтверждение успешного запуска Kafka контейнера
+- `TC-KAFKA-004_step6_message_sent.jpg` - Тестовое сообщение отправлено через AKHQ после восстановления
+- `TC-KAFKA-004_step7_consumer_recovery.txt` - Логи consumer подтверждающие обработку сообщения после восстановления 
 
 **Status:** ✅ Manual
 
@@ -296,6 +328,7 @@ Status: ✅ Manual
 ```
 
 Status: ✅ Manual
+
 
 
 
