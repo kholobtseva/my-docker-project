@@ -11,11 +11,11 @@
 - Kafka брокер здоров
 
 **Test Steps:**
-1. Проверить статус контейнеров: `docker-compose ps`.
+1. Проверить статус контейнеров: `docker-compose ps`.  
    ER: Все контейнеры в статусе "Up" 
-2. Проверить список топиков: `docker-compose exec kafka kafka-topics --list --bootstrap-server localhost:9092`.
+2. Проверить список топиков: `docker-compose exec kafka kafka-topics --list --bootstrap-server localhost:9092`.  
    ER: Топик market-data присутствует в списке.
-3. Проверить доступность Kafdrop: http://localhost:9000.
+3. Проверить доступность Kafdrop: http://localhost:9000.  
    ER: Kafdrop доступен и отображает топики
 
 **Status:** ✅ Automated in CI  ✅ Manual  
@@ -36,9 +36,9 @@
 - Топик `market-data` создан
 
 **Test Steps:**
-1. Открыть AKHQ в браузере.  
+1. Открыть AKHQ в браузере.    
    ER: Интерфейс AKHQ открывается
-2. Перейти в топик `market-data`.  
+2. Перейти в топик `market-data`.    
    ER: Отображается страница топика с информацией о партициях
 3. Нажать "Produce to topic".  
    ER: Открывается форма для отправки сообщения
@@ -296,6 +296,7 @@ Status: ✅ Manual
 ```
 
 Status: ✅ Manual
+
 
 
 
