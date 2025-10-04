@@ -70,6 +70,18 @@ Status: ✅ Manual ✅ PASSED
 
 Status: ✅ Manual ✅ PASSED
 ---
+
+### TC-KAFKA-006: Invalid Date Format Handling
+
+| Step | Action | Expected Result | Actual Result | Status | Evidence |
+|------|--------|-----------------|---------------|--------|----------|
+| 1 | Send message with invalid date via AKHQ | Message successfully sent to market-data topic | Message successfully sent to topic | ✅ PASS | ![Step1](../screenshots/kafka_pipeline/TC-KAFKA-006_step1_message_sent.jpg) |
+| 2 | Check consumer logs for validation warnings | Consumer logs show warnings about invalid date format | No validation warnings - invalid date accepted without errors | ❌ FAIL | [Logs](../test_results/TC-KAFKA-006_step2_consumer_logs.txt) |
+
+Status: ✅ Manual ❌ FAILED - Missing date validation (Bug BUG-KAFKA-006)  
+Bug Reference: BUG-KAFKA-006_missing_date_validation.md
+
+---
 # ШАБЛОНЫ
 ✅ PASS - все ок  
 ❌ FAIL - тест не прошел  
