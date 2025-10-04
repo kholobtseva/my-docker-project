@@ -133,7 +133,7 @@
    
    Получить лог  
    ```bash
-   docker-compose ps | grep kafka > quality-assurance/test_results/TC-KAFKA-004_step1_kafka_stopped.txt
+   docker-compose ps > quality-assurance/test_results/TC-KAFKA-004_step1_all_containers_status.txt
    ```
 2. Запустить python-script при недоступном Kafka:
    ```bash
@@ -147,13 +147,13 @@
    ER: В логах присутствуют сообщения об ошибках подключения к Kafka  
    Получить лог  
    ```bash
-   docker-compose logs python-script --tail=30 > quality-assurance/test_results/TC-KAFKA-004_step2_python_script_logs.txt
+   docker-compose logs python-script > quality-assurance/test_results/TC-KAFKA-004_step2_python_script_logs.txt
    ```  
 4. Проверить наличие в логах следующих сообщений об ошибках:  
-   - "Не удалось подключиться к Kafka"
-   - "Kafka connection error" 
-   - "NoBrokersAvailable"
-   - "Failed to connect to Kafka".  
+- "DNS lookup failed for kafka:9092"
+- "Name or service not known"
+- "WARNING Failed to connect to Kafka: NoBrokersAvailable"
+- "ERROR DNS lookup failed for kafka:9092"  
    ER: Хотя бы одно из сообщений об ошибках найдено в логах
 5. Запустить Kafka:
     ```bash
@@ -162,7 +162,7 @@
    ER: Kafka контейнер запускается  
    Получить лог.
    ```bash
-   docker-compose ps | grep kafka > quality-assurance/test_results/TC-KAFKA-004_step5_kafka_started.txt
+   docker-compose ps | findstr "kafka" > quality-assurance/test_results/TC-KAFKA-004_step5_kafka_started.txt
    ```  
 6. Подождать 30 секунд для восстановления соединения.
    ```bash
@@ -174,7 +174,6 @@
    ```json
    {"id_value": 1001, "date": "2025-10-04", "price": 155.50, "contract": "RECOVERY_TEST ", "name_rus": "Kafka Recovery Test", "source": "recovery_test", "volume": 500, "currency": "USD"}
    ```
-    
    ER: Сообщение успешно отправляется в топик
 8. Проверить что consumer обработал сообщение:
      ```bash
@@ -183,15 +182,15 @@
    ER: В логах consumer присутствует запись об обработке нового сообщения  
    Получить лог.
    ```bash
-   docker-compose logs kafka-consumer --tail=15 > quality-assurance/test_results/TC-KAFKA-004_step8_consumer_processing.txt
+   docker-compose logs kafka-consumer --tail=15 > 'quality-assurance/test_results/TC-KAFKA-004_step8_consumer_processing.txt'
    ```
 
   **Evidence:** 
-- `TC-KAFKA-004_step1_kafka_stopped.jpg` - Подтверждение остановки Kafka контейнера
-- `TC-KAFKA-004_step2_producer_errors.txt` - Логи producer с ошибками подключения при недоступности Kafka
-- `TC-KAFKA-004_step4_kafka_started.jpg` - Подтверждение успешного запуска Kafka контейнера
-- `TC-KAFKA-004_step6_message_sent.jpg` - Тестовое сообщение отправлено через AKHQ после восстановления
-- `TC-KAFKA-004_step7_consumer_recovery.txt` - Логи consumer подтверждающие обработку сообщения после восстановления 
+- `TC-KAFKA-004_step1_all_containers_status.txt` - Подтверждение остановки Kafka контейнера
+- `TC-KAFKA-004_step2_python_script_logs.txt` - Логи producer с ошибками подключения при недоступности Kafka
+- `TC-KAFKA-004_step5_kafka_started.txt` - Подтверждение успешного запуска Kafka контейнера
+- `TC-KAFKA-004_step8_message_sent.jpg` - Тестовое сообщение отправлено через AKHQ после восстановления
+- `TC-KAFKA-004_step8_consumer_recovery.txt` - Логи consumer подтверждающие обработку сообщения после восстановления 
 
 **Status:** ✅ Manual
 
@@ -345,6 +344,7 @@ Status: ✅ Manual
 ```
 
 Status: ✅ Manual
+
 
 
 
