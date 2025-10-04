@@ -21,11 +21,17 @@
 | 2 | `docker-compose exec kafka...` | Топик market-data существует | ✅ Топик найден | PASS | ![Топики](../screenshots/kafka_pipeline/TC-KAFKA-001_step2_kafka_topics_list.jpg) |
 | 3 | Открыть Kafdrop | Интерфейс доступен | ✅ Kafdrop открыт | PASS | ![Kafdrop](../screenshots/kafka_pipeline/TC-KAFKA-001_step3_kafdrop_interface.jpg) |
 
+---
+### TC-KAFKA-002: Manual Message Producing via AKHQ
 
+| Step | Action | Expected Result | Actual Result | Status | Evidence |
+|------|--------|-----------------|---------------|--------|----------|
+| 1 | Открыть AKHQ | Интерфейс AKHQ открывается | ✅ AKHQ доступен | PASS | ![AKHQ](../screenshots/kafka_pipeline/TC-KAFKA-002_step1_akhq_main.jpg) |
+| 2 | Перейти в топик market-data | Отображается страница топика | ✅ Топик найден | PASS | ![Топик](../screenshots/kafka_pipeline/TC-KAFKA-002_step2_topic_details.jpg) |
+| 3 | Нажать "Produce message" | Открывается форма отправки | ✅ Форма открыта | PASS | ![Форма](../screenshots/kafka_pipeline/TC-KAFKA-002_step3_produce_form.jpg) |
+| 4 | Ввести и отправить сообщение | Сообщение успешно отправлено | ✅ Сообщение отправлено | PASS | ![Отправка](../screenshots/kafka_pipeline/TC-KAFKA-002_step4_message_sent.jpg) |
 
-
-
-
+---
 
 
 ---
