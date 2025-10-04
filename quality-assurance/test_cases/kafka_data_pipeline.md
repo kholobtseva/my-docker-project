@@ -241,13 +241,22 @@ Status: ✅ Manual
 **Test Steps:**
 1. Отправить сообщение с некорректной датой через AKHQ.  
    ER: Сообщение успешно отправляется в топик market-data
-2. Проверить логи consumer на наличие предупреждений о невалидных данных.  
+   
+   Test Data (для AKHQ):  
+   ```json
+   {"id_value":201,"date":"invalid-date","price":106.25,"contract":"FEFZ25"}
+   ```
+2. Проверить логи consumer на наличие предупреждений о невалидных данных.    
    ER: В логах consumer присутствуют предупреждения о невалидном формате даты
+   ```bash
+   docker-compose logs kafka-consumer --tail=20 > quality-assurance/test_results/TC-KAFKA-006_step2_consumer_logs.txt
+   ```
 
-**Test Data (для AKHQ):**
-```json
-{"id_value":201,"date":"invalid-date","price":106.25,"contract":"FEFZ25"}
-```
+**Evidence:**
+
+- TC-KAFKA-006_step1_message_sent.jpg - Отправка сообщения с невалидной датой через AKHQ UI
+- TC-KAFKA-006_step2_consumer_logs.txt - Логи Kafka consumer с предупреждениями о невалидной дате
+
 Status: ✅ Manual
 
 ---
@@ -356,6 +365,7 @@ Status: ✅ Manual
 ```
 
 Status: ✅ Manual
+
 
 
 
