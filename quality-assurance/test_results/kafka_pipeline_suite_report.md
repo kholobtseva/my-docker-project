@@ -13,7 +13,7 @@
 
 ## 🧪 Test Case Results
 
-### ✅ TC-KAFKA-001: Basic Kafka Connectivity
+### TC-KAFKA-001: Basic Kafka Connectivity
 
 | Step | Action | Expected Result | Actual Result | Status | Evidence |
 |------|--------|-----------------|---------------|--------|----------|
