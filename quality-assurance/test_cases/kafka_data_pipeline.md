@@ -49,7 +49,7 @@
 ```json
 {
   "id_value": 999,
-  "date": "2024-01-15",
+  "date": "2025-01-15",
   "price": 150.75,
   "contract": "MANUAL_TEST",
   "name_rus": "Тест ручного QA",
@@ -57,13 +57,13 @@
   "source": "manual_test",
   "volume": 1000,
   "currency": "USD",
-  "sync_timestamp": "2024-01-15T12:00:00Z"
+  "sync_timestamp": "2025-01-15T12:00:00Z"
 }
 ```
 
 **Test Data (для AKHQ):**
 ```
-{"id_value":999,"date":"2024-01-15","price":150.75,"contract":"MANUAL_TEST","name_rus":"Тест ручного QA","name_eng":"Manual QA Test","source":"manual_test","volume":1000,"currency":"USD","sync_timestamp":"2024-01-15T12:00:00Z"}
+{"id_value":999,"date":"2025-01-15","price":150.75,"contract":"MANUAL_TEST","name_rus":"Тест ручного QA","name_eng":"Manual QA Test","source":"manual_test","volume":1000,"currency":"USD","sync_timestamp":"2025-01-15T12:00:00Z"}
 ```
 **Evidence:** 
 - `TC-KAFKA-002_step1_akhq_main.jpg`
@@ -83,15 +83,18 @@
 - Топик `market-data` содержит сообщения
 
 **Test Steps:**
-1. Отправить тестовое сообщение через AKHQ (как в TC-KAFKA-002).  
+1. Отправить тестовое сообщение через AKHQ.
+   ```json
+   {"id_value":999,"date":"2025-10-04","price":150.75,"contract":"MANUAL_TEST","name_rus":"Тест ручного QA Consumer Data Processing and CSV Export","name_eng":"Manual QA Test Consumer Data Processing and CSV Export","source":"manual_test","volume":1000,"currency":"USD","sync_timestamp":"2025-10-04T12:00:00Z"}
+   ```  
    ER: Сообщение появляется в топике market-data
-2. Проверить логи consumer: `docker-compose logs kafka-consumer`.  
+3. Проверить логи consumer: `docker-compose logs kafka-consumer`.  
    ER: В логах присутствует запись о получении сообщения
-3. Проверить создание CSV файла: `ls -la /app/logs/kafka_messages.csv`.  
+4. Проверить создание CSV файла: `ls -la /app/logs/kafka_messages.csv`.  
    ER: CSV файл существует в указанной папке
-4. Проверить содержимое CSV файла.  
+5. Проверить содержимое CSV файла.  
    ER: Файл содержит данные отправленного сообщения
-5. Проверить нормализацию данных в CSV.  
+6. Проверить нормализацию данных в CSV.  
    ER: Все поля корректно нормализованы (без лишних пробелов)
 
 **Status:** ✅ Manual (можно автоматизировать позже)
@@ -277,6 +280,7 @@ Status: ✅ Manual
 ```
 
 Status: ✅ Manual
+
 
 
 
