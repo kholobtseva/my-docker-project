@@ -88,13 +88,22 @@
    {"id_value":999,"date":"2025-10-04","price":150.75,"contract":"MANUAL_TEST","name_rus":"Manual QA Test Data Processing","name_eng":"Manual QA Test Consumer Data Processing and CSV Export","source":"manual_test","volume":1000,"currency":"USD","sync_timestamp":"2025-10-04T12:00:00Z"}
    ```  
    ER: Сообщение появляется в топике market-data
-3. Проверить логи consumer: `docker-compose logs kafka-consumer`.  
-   ER: В логах присутствует запись о получении сообщения
+2. Проверить логи consumer: `docker-compose logs kafka-consumer`.  
+   ER: В логах присутствует запись о получении сообщения  
+   ```bash
+   docker-compose logs kafka-consumer --tail=20 > quality-assurance/test_results/TC-KAFKA-003_step2_consumer_logs.txt
+   ```
 4. Проверить создание CSV файла: `ls -la /app/logs/kafka_messages.csv`.  
-   ER: CSV файл существует в указанной папке
+   ER: CSV файл существует в указанной папке  
+    ```bash
+    docker-compose exec kafka-consumer ls -la /app/logs/ > quality-assurance/test_results/TC-KAFKA-003_step3_csv_file_check.txt
+    ```
 5. Проверить содержимое CSV файла.  
    ER: Файл содержит данные отправленного сообщения
-6. Проверить нормализацию данных в CSV.  
+    ```bash
+    docker-compose exec kafka-consumer cat /app/logs/kafka_messages.csv > quality-assurance/test_results/TC-KAFKA-003_step5_data_normalization.txt
+    ```
+6. Проверить нормализацию данных в файле CSV.  
    ER: Все поля корректно нормализованы (без лишних пробелов)
 
 **Evidence:** 
@@ -287,6 +296,7 @@ Status: ✅ Manual
 ```
 
 Status: ✅ Manual
+
 
 
 
