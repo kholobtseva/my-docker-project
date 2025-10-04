@@ -5,37 +5,45 @@ import os
 import time
 from datetime import datetime
 from kafka import KafkaConsumer
+import sys
+import io
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+if sys.stdout.encoding != 'UTF-8':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+if sys.stderr.encoding != 'UTF-8':
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
 def normalize_value(value, default=''):
-    """Нормализует значение - тримминг и приведение к строке"""
+    """Normalizes value - trimming and converting to string"""
     if value is None:
         return default
     return str(value).strip()
 
 def validate_payload(payload):
-    """Валидация обязательных полей в payload"""
+    """Validate required fields in payload"""
     if not payload:
-        logger.error("❌ Пустой payload")
+        logger.error("ERROR Empty payload")
         return False
         
     required_fields = ['contract', 'date', 'price']
     for field in required_fields:
         if field not in payload:
-            logger.warning(f"⚠️ Отсутствует обязательное поле: {field}")
+            logger.warning(f"WARNING Missing required field: {field}")
             return False
             
-    # Дополнительная проверка типов данных
+    # Additional data type validation
     if not isinstance(payload.get('contract'), str):
-        logger.warning("⚠️ Поле contract должно быть строкой")
+        logger.warning("WARNING Contract field must be string")
         return False
         
     return True
 
 def save_to_csv(data, filename='kafka_messages.csv'):
-    """Сохраняет данные в CSV файл с валидацией и нормализацией"""
+    """Save data to CSV file with validation and normalization"""
     try:
         log_dir = '/app/logs'
         if not os.path.exists(log_dir):
@@ -43,16 +51,16 @@ def save_to_csv(data, filename='kafka_messages.csv'):
         
         filepath = os.path.join(log_dir, filename)
         
-        # Проверяем обязательные поля
+        # Check required fields
         payload = data.get('payload', {})
         if not validate_payload(payload):
-            logger.error("❌ Некорректный payload, пропускаем сообщение")
+            logger.error("ERROR Invalid payload, skipping message")
             return False
         
-        # Улучшенная проверка файла - всегда пишем заголовки для пустого файла
+        # Improved file check - always write headers for empty file
         file_exists = os.path.isfile(filepath)
         if file_exists:
-            # Проверяем не пустой ли файл
+            # Check if file is empty
             is_empty = os.path.getsize(filepath) == 0
             mode = 'a' if not is_empty else 'w'
         else:
@@ -62,7 +70,7 @@ def save_to_csv(data, filename='kafka_messages.csv'):
         with open(filepath, mode, newline='', encoding='utf-8') as f:
             writer = csv.writer(f, delimiter=';')
             
-            # Записываем заголовок если файл новый ИЛИ пустой
+            # Write headers if file is new OR empty
             if mode == 'w' or is_empty:
                 headers = [
                     'kafka_timestamp', 'message_offset', 'message_count',
@@ -70,9 +78,9 @@ def save_to_csv(data, filename='kafka_messages.csv'):
                     'name_rus', 'source', 'sync_timestamp'
                 ]
                 writer.writerow(headers)
-                logger.info("📄 Заголовки CSV записаны")
+                logger.info("INFO CSV headers written")
             
-            # Нормализованное извлечение данных
+            # Normalized data extraction
             row = [
                 normalize_value(data.get('kafka_timestamp'), datetime.now().isoformat()),
                 normalize_value(data.get('message_offset')),
@@ -89,20 +97,20 @@ def save_to_csv(data, filename='kafka_messages.csv'):
             
             writer.writerow(row)
         
-        logger.info(f"💾 Данные сохранены в CSV: {filepath}")
+        logger.info(f"SAVED Data saved to CSV: {filepath}")
         return True
         
     except Exception as e:
-        logger.error(f"❌ Ошибка сохранения в CSV: {e}")
+        logger.error(f"ERROR CSV save error: {e}")
         return False
 
 def process_message(message, message_count):
-    """Обработка одного сообщения из Kafka"""
+    """Process single Kafka message"""
     try:
         data = message.value
-        logger.info(f"📨 Получено сообщение #{message_count}: {data.get('contract', 'Unknown')} - {data.get('date', 'No date')}")
+        logger.info(f"RECEIVED Message #{message_count}: {data.get('contract', 'Unknown')} - {data.get('date', 'No date')}")
         
-        # Подготавливаем данные для CSV
+        # Prepare data for CSV
         enriched_data = {
             'kafka_timestamp': datetime.now().isoformat(),
             'message_offset': message.offset,
@@ -110,20 +118,20 @@ def process_message(message, message_count):
             'payload': data
         }
         
-        # Сохраняем в CSV
+        # Save to CSV
         if save_to_csv(enriched_data):
-            logger.debug(f"✅ Сообщение #{message_count} сохранено в CSV")
+            logger.debug(f"SAVED Message #{message_count} saved to CSV")
             return True
         else:
-            logger.error(f"❌ Ошибка сохранения сообщения #{message_count}")
+            logger.error(f"ERROR Failed to save message #{message_count}")
             return False
             
     except Exception as e:
-        logger.error(f"❌ Ошибка обработки сообщения #{message_count}: {e}")
+        logger.error(f"ERROR Message processing error #{message_count}: {e}")
         return False
 
 def run_consumer():
-    """Основная функция запуска consumer"""
+    """Main consumer function"""
     try:
         consumer = KafkaConsumer(
             'market-data',
@@ -134,29 +142,29 @@ def run_consumer():
             enable_auto_commit=True
         )
         
-        logger.info("✅ Kafka consumer запущен и ожидает новые сообщения...")
+        logger.info("STARTED Kafka consumer started and waiting for messages...")
         
-        # Создаем CSV файл с заголовком при первом запуске
+        # Create CSV file with headers on first run
         csv_file = '/app/logs/kafka_messages.csv'
         try:
-            # Удаляем старый файл чтобы создать новый с заголовками
+            # Remove old file to create new one with headers
             if os.path.exists(csv_file):
                 os.remove(csv_file)
-                logger.info("🗑️ Удален старый CSV файл для создания нового с заголовками")
+                logger.info("CLEANED Old CSV file removed for fresh start with headers")
         except Exception as e:
-            logger.warning(f"⚠️ Не удалось удалить старый CSV: {e}")
+            logger.warning(f"WARNING Failed to remove old CSV: {e}")
         
         message_count = 0
         
-        # Бесконечный цикл ожидания сообщений
+        # Infinite message loop
         for message in consumer:
             message_count += 1
             process_message(message, message_count)
                 
     except KeyboardInterrupt:
-        logger.info("🛑 Consumer остановлен пользователем")
+        logger.info("STOP Consumer stopped by user")
     except Exception as e:
-        logger.error(f"❌ Критическая ошибка consumer: {e}")
+        logger.error(f"ERROR Critical consumer error: {e}")
         raise
 
 if __name__ == "__main__":
