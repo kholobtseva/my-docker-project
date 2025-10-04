@@ -17,9 +17,9 @@
 
 | Step | Action | Expected Result | Actual Result | Status | Evidence |
 |------|--------|-----------------|---------------|--------|----------|
-| 1 | `docker-compose ps` | Все контейнеры "Up" | ✅ Все контейнеры запущены | PASS | ![Контейнеры](../screenshots/kafka_pipeline/TC-KAFKA-001_step1.jpg) |
-| 2 | `docker-compose exec kafka...` | Топик market-data существует | ✅ Топик найден | PASS | ![Топики](../screenshots/kafka_pipeline/TC-KAFKA-001_step2.jpg) |
-| 3 | Открыть Kafdrop | Интерфейс доступен | ✅ Kafdrop открыт | PASS | ![Kafdrop](../screenshots/kafka_pipeline/TC-KAFKA-001_step3.jpg) |
+| 1 | `docker-compose ps` | Все контейнеры "Up" | ✅ Все контейнеры запущены | PASS | ![Контейнеры](../screenshots/kafka_pipeline/TC-KAFKA-001_step1_docker_containers_status.JPG) |
+| 2 | `docker-compose exec kafka...` | Топик market-data существует | ✅ Топик найден | PASS | ![Топики](../screenshots/kafka_pipeline/TC-KAFKA-001_step2_kafka_topics_list.jpg) |
+| 3 | Открыть Kafdrop | Интерфейс доступен | ✅ Kafdrop открыт | PASS | ![Kafdrop](../screenshots/kafka_pipeline/TC-KAFKA-001_step3_kafdrop_interface.jpg) |
 
 
 
