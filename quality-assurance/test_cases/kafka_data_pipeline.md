@@ -359,15 +359,21 @@ Status: ✅ Manual
 **Test Steps:**
 1. Отправить сообщение с большим объемом данных через AKHQ.  
    ER: Сообщение успешно отправляется в топик market-data
+   
+   **Test Data (для AKHQ):**
+   ```json
+   {"id_value":204,"date":"2025-10-04","price":106.25,"contract":"FEFZ25","name_rus":"Iron Ore 62% Fe - large volume data test with additional text","source":"moex_sgx","extra_field":"additional_field_with_long_value_that_should_test_message_size_limits"}
+   ```
 2. Проверить что сообщение обработано без ошибок.  
    ER: В логах consumer отсутствуют ошибки обработки большого сообщения
+   ```bash
+   docker-compose logs kafka-consumer --tail=20 > quality-assurance/test_results/TC-KAFKA-010_step2_consumer_logs.txt
+   ```
+**Evidence:**
+- TC-KAFKA-010_step1_message_sent.jpg - Отправка большого сообщения через AKHQ UI
+- TC-KAFKA-010_step2_consumer_logs.txt - Логи Kafka consumer без ошибок обработки
 
-**Test Data (для AKHQ):**
-```json
-{"id_value":204,"date":"2025-01-15","price":106.25,"contract":"FEFZ25","name_rus":"Железная руда 62% Fe - тест большого объема данных с дополнительным текстом","source":"moex_sgx","extra_field":"дополнительное_поле_с_длинным_значением"}
-```
-
-Status: ✅ Manual
+**Status:** ✅ Manual
 
 ---
 ### TC-KAFKA-011: Security Data Handling
@@ -390,6 +396,7 @@ Status: ✅ Manual
 ```
 
 Status: ✅ Manual
+
 
 
 
