@@ -302,13 +302,21 @@ Status: ✅ Manual
 **Test Steps:**
 1. Отправить сообщение с невалидным JSON через AKHQ.  
    ER: Сообщение успешно отправляется в топик market-data
+   
+   Test Data (для AKHQ):  
+   ```json
+   {"id_value":203,"date":"2025-10-04","price":106.25,"contract":"FEFZ25","name_rus":"Iron Ore 62% Fe","source":"moex_sgx"
+   ```
 2. Проверить логи consumer на обработку ошибки парсинга.  
    ER: В логах consumer присутствуют ошибки парсинга JSON
+   ```bash
+   docker-compose logs kafka-consumer --tail=20 > quality-assurance/test_results/TC-KAFKA-008_step2_consumer_logs.txt
+   ```
 
-**Test Data (для AKHQ):**
-```json
-{"id_value":203,"date":"2025-01-15","price":106.25,"contract":"FEFZ25","name_rus":"Железная руда 62% Fe","source":"moex_sgx"
-```
+**Evidence:**
+- TC-KAFKA-008_step1_message_sent.jpg - Отправка сообщения с невалидным JSON через AKHQ UI
+- TC-KAFKA-008_step2_consumer_logs.txt - Логи Kafka consumer с ошибками парсинга JSON
+
 Status: ✅ Manual
 
 ---
@@ -375,6 +383,7 @@ Status: ✅ Manual
 ```
 
 Status: ✅ Manual
+
 
 
 
