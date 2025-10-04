@@ -5,7 +5,7 @@ import time
 from datetime import timezone
 import requests
 import json
-import psycopg2  # Меняем pyodbc на psycopg2
+import psycopg2
 import csv
 from datetime import datetime, timedelta, date
 from dateutil.relativedelta import *
@@ -14,7 +14,7 @@ from kafka import KafkaProducer
 from decimal import Decimal
 
 
-# Настройка логирования
+# Logging setup
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -39,10 +39,9 @@ try:
     value_serializer=lambda v: json.dumps(v, ensure_ascii=False, cls=CustomJSONEncoder).encode('utf-8')
 )
     
-    
-    logger.info("✅ Kafka producer инициализирован")
+    logger.info("SUCCESS Kafka producer initialized")
 except Exception as e:
-    logger.warning(f"⚠️ Не удалось подключиться к Kafka: {e}")
+    logger.warning(f"WARNING Failed to connect to Kafka: {e}")
     producer = None
 
 def send_to_elasticsearch(data, index_name):
@@ -57,28 +56,28 @@ def send_to_elasticsearch(data, index_name):
 def send_to_kafka(data):
     if producer is not None:
         try:
-            # Создаем копию данных и преобразуем Decimal в float
+            # Create data copy and convert Decimal to float
             kafka_data = data.copy()
             
-            # Преобразуем все Decimal значения в float
+            # Convert all Decimal values to float
             for key, value in kafka_data.items():
                 if isinstance(value, Decimal):
                     kafka_data[key] = float(value)
             
-            # Убедимся что data - это dict
+            # Ensure data is dict
             if isinstance(kafka_data, dict):
                 future = producer.send('market-data', value=kafka_data)
                 future.get(timeout=10)
-                logger.info(f"✅ Данные отправлены в Kafka: {kafka_data.get('contract', 'Unknown')} - {kafka_data.get('date', 'No date')}")
+                logger.info(f"SUCCESS Data sent to Kafka: {kafka_data.get('contract', 'Unknown')} - {kafka_data.get('date', 'No date')}")
             else:
-                logger.warning(f"⚠️ Неверный формат данных для Kafka: {type(kafka_data)} - {str(kafka_data)[:100]}")
+                logger.warning(f"WARNING Invalid data format for Kafka: {type(kafka_data)} - {str(kafka_data)[:100]}")
         except Exception as e:
-            logger.warning(f"⚠️ Ошибка отправки в Kafka: {e}")
+            logger.warning(f"WARNING Kafka send error: {e}")
 
 
-# Настройки подключения к БД из переменных окружения
+# Database connection settings from environment variables
 DB_CONFIG = {
-    "host": "postgres",      # имя контейнера с PostgreSQL
+    "host": "postgres",
     "database": "my_db",
     "user": "user",
     "password": "password",
@@ -116,13 +115,11 @@ def get_data_json(url, i):
                 'formatted_date': formatted_date
             })
     except requests.exceptions.RequestException as er:
-        #print('Network error:', er)
         logger.error('Network error: %s', er)
         health_status = 0
         to_log_file('\nNetwork error!\n')
         set_status_robot(1012, health_status, '')
     except ValueError as err:
-        #print('\nError:', err)
         logger.error('ValueError: %s', err)
         health_status = 0
         to_log_file('\nNo data available for the requested date\n')
@@ -130,16 +127,16 @@ def get_data_json(url, i):
 
 def insert_record_if_not_exists():
     try:
-        # Подключение к базе данных через psycopg2
+        # Database connection via psycopg2
         conn = psycopg2.connect(**DB_CONFIG)
         cursor = conn.cursor()
 
         for name in name_list:
-            # Поиск записи с данным именем
+            # Find record by name
             cursor.execute("SELECT id FROM public.www_data_idx WHERE name_eng = %s AND source = 'ore_futures'", (name,))
             record = cursor.fetchone()
 
-            if record is None:  # Если запись не найдена, вставляем новую запись
+            if record is None:  # If record not found, insert new
                 cursor.execute("SELECT MAX(id) FROM public.www_data_idx")
                 max_id = cursor.fetchone()[0]
 
@@ -149,24 +146,22 @@ def insert_record_if_not_exists():
                 new_id = max_id + 1
                 current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-                # Вставка новой записи
-                cursor.execute("INSERT INTO public.www_data_idx (id, mask, name_rus, name_eng, source, url, descr, date_upd) VALUES (%s, NULL, 'Железная руда 62% Fe', %s, 'ore_futures', 'https://api.sgx.com/derivatives/v1.0/history/symbol/', NULL, %s)",
+                # Insert new record
+                cursor.execute("INSERT INTO public.www_data_idx (id, mask, name_rus, name_eng, source, url, descr, date_upd) VALUES (%s, NULL, 'Iron Ore 62% Fe', %s, 'ore_futures', 'https://api.sgx.com/derivatives/v1.0/history/symbol/', NULL, %s)",
                                (new_id, name, current_date))
-                logger.info("Запись была успешно добавлена")
+                logger.info("Record successfully added")
 
         conn.commit()
 
     except (Exception, psycopg2.Error) as error:
-        #print("Ошибка при работе с PostgreSQL", error)
-        logger.error("Ошибка при работе с PostgreSQL: %s", error)
+        logger.error("PostgreSQL error: %s", error)
 
     finally:
-        # Закрываем соединение с базой данных
+        # Close database connection
         if conn:
             cursor.close()
             conn.close()
-            #print("Соединение с PostgreSQL закрыто")
-            logger.info("Соединение с PostgreSQL закрыто")
+            logger.info("PostgreSQL connection closed")
 
 class SetInformation():
     @staticmethod
@@ -212,9 +207,7 @@ def set_status_robot(id, health_status, add_text):
 
     except psycopg2.DatabaseError as e:
         print("Error at execute:")
-        #print(query)
         logger.error("Error at execute query: %s", query)
-        #print(e)
         logger.error("Database error: %s", e)
 
     finally:
@@ -225,26 +218,24 @@ def set_status_robot(id, health_status, add_text):
 
 def get_current_date():
     
-     # UTC+3 (Московское время)
+     # UTC+3 (Moscow time)
     current_time = datetime.now(timezone.utc) + timedelta(hours=3)
     return current_time.strftime("%Y-%m-%d %H:%M:%S MSK") + '\n'
-    #return str(datetime.fromtimestamp(int(time.time()))) + '\n'
     
     
 def sync_to_elasticsearch():
-    """Автоматическая синхронизация данных с Elasticsearch"""
+    """Automatic data synchronization with Elasticsearch"""
     try:
         
         import psycopg2
         
-        logger.info("Начинаем синхронизацию с Elasticsearch...")
+        logger.info("Starting Elasticsearch synchronization...")
         
-       
-        # Подключение к PostgreSQL
+        # Connect to PostgreSQL
         conn = psycopg2.connect(**DB_CONFIG)
         cursor = conn.cursor()
         
-        # Выбираем данные из таблицы
+        # Select data from table
         cursor.execute("""
             SELECT am.id_value, am.date_val, am.avg_val, am.volume, am.currency,
                    wdi.name_eng, wdi.name_rus
@@ -266,24 +257,23 @@ def sync_to_elasticsearch():
                 'sync_timestamp': datetime.now().isoformat()
             }
             
-            # Отправляем в Elasticsearch
+            # Send to Elasticsearch
             es.index(index='agriculture-data', document=doc)
             
             send_to_kafka(doc)
             synced_count += 1
             
-        logger.info(f"Синхронизация завершена! Обработано записей: {synced_count}")
+        logger.info(f"SUCCESS Synchronization completed! Processed records: {synced_count}")
         
         cursor.close()
         conn.close()
         
     except Exception as e:
-        logger.error(f"Ошибка синхронизации с Elasticsearch: {e}")
+        logger.error(f"ERROR Elasticsearch synchronization error: {e}")
 
 
 
-
-# Основной код
+# Main code
 interval  = '1w' #'3y'
 health_status = 100
 
@@ -305,7 +295,7 @@ try:
     conn = psycopg2.connect(**DB_CONFIG)
     cursor = conn.cursor()
 
-    to_log_file("\nConnect to DB PostgreSQL:  YES!!!\n", True)
+    to_log_file("\nConnect to DB PostgreSQL: YES!!!\n", True)
 
     cursor.execute("SELECT id, name_eng, url FROM public.www_data_idx where source='ore_futures'")
     rows = cursor.fetchall()
@@ -332,12 +322,10 @@ try:
                         data = []
 
                     except IndexError:
-                        #print('An IndexError occurred when processing data:', data)
-                        logger.error('An IndexError occurred when processing data: %s', data)
+                        logger.error('IndexError when processing data: %s', data)
                         health_status = 0
 
             except Exception as e:
-                #print(f"Exception: {e}")
                 logger.error("Exception: %s", e)
                 health_status = 0
                 continue
@@ -347,7 +335,6 @@ try:
     conn.close()
 
     to_log_file("\nFINISH RUN SCRIPT\n", True)
-    #print(health_status)
     logger.info("Health status: %s", health_status)
     set_status_robot(1012, health_status, '')
     sync_to_elasticsearch()
@@ -355,7 +342,6 @@ try:
 
 except psycopg2.DatabaseError as e:
     health_status = 0
-    to_log_file("\nConnect to DB PostgreSQL:  NO!!!\n", True)
+    to_log_file("\nConnect to DB PostgreSQL: NO!!!\n", True)
     to_log_file(str(e), True)
     set_status_robot(1012, health_status, '')
-    
