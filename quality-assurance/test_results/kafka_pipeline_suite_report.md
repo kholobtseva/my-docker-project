@@ -32,7 +32,15 @@
 | 4 | Ввести и отправить сообщение | Сообщение успешно отправлено | ✅ Сообщение отправлено | PASS | ![Отправка](../screenshots/kafka_pipeline/TC-KAFKA-002_step4_message_sent.jpg) |
 
 ---
+### TC-KAFKA-003: Consumer Data Processing and CSV Export
 
+| Step | Action | Expected Result | Actual Result | Status | Evidence |
+|------|--------|-----------------|---------------|--------|----------|
+| 1 | Отправить тестовое сообщение через AKHQ | Сообщение появляется в топике market-data | ✅ Сообщение успешно отправлено | PASS | ![AKHQ](../screenshots/kafka_pipeline/TC-KAFKA-003_step1_message_in_topic.jpg) |
+| 2 | Проверить логи consumer | В логах присутствует запись о получении сообщения | ✅ Consumer получил сообщение | PASS | [Логи](../test_results/TC-KAFKA-003_step2_consumer_logs.txt) |
+| 3 | Проверить создание CSV файла | CSV файл существует в папке /app/logs/ | ✅ Файл создан | PASS | [Проверка](../test_results/TC-KAFKA-003_step3_csv_file_check.txt) |
+| 4 | Проверить содержимое CSV файла | Файл содержит данные отправленного сообщения | ✅ Данные присутствуют | PASS | ![CSV](../screenshots/kafka_pipeline/TC-KAFKA-003_step4_csv_content.jpg) |
+| 5 | Проверить нормализацию данных | Все поля корректно нормализованы | ✅ Проблема с кириллицей в name_rus | WARNING | [Нормализация](../test_results/TC-KAFKA-003_step5_data_normalization.txt) |
 
 ---
 # ШАБЛОНЫ
