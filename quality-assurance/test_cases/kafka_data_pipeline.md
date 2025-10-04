@@ -387,15 +387,22 @@ Status: ✅ Manual
 **Test Steps:**
 1. Отправить сообщение с потенциально опасными данными через AKHQ.  
    ER: Сообщение успешно отправляется в топик market-data
+   
+   **Test Data (для AKHQ):**
+   ```json
+   {"id_value":205,"date":"2025-10-04; DROP TABLE agriculture_moex; --","price":106.25,"contract":"FEFZ25","name_rus":"<script>alert('xss')</script>","source":"moex_sgx"}
+   ```
 2. Проверить что данные экранируются или отклоняются.  
    ER: В CSV файле потенциально опасные данные корректно экранированы
-
-**Test Data (для AKHQ):**
-```json
-{"id_value":205,"date":"2025-01-15; DROP TABLE agriculture_moex; --","price":106.25,"contract":"FEFZ25","name_rus":"<script>alert('xss')</script>","source":"moex_sgx"}
+```bash
+docker-compose exec kafka-consumer cat /app/logs/kafka_messages.csv > quality-assurance/test_results/TC-KAFKA-011_step2_csv_content.txt
 ```
+**Evidence:**
+- TC-KAFKA-011_step1_message_sent.jpg - Отправка сообщения с опасными данными через AKHQ UI
+- TC-KAFKA-011_step2_csv_content.txt - Проверка экранирования данных в CSV файле
 
 Status: ✅ Manual
+
 
 
 
