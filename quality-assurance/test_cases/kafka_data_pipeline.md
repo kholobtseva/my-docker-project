@@ -40,7 +40,7 @@
    ER: Интерфейс AKHQ открывается
 2. Перейти в топик `market-data`.  
    ER: Отображается страница топика с информацией о партициях
-3. Нажать "Produce message".  
+3. Нажать "Produce to topic".  
    ER: Открывается форма для отправки сообщения
 4. Ввести тестовое сообщение и отправить.  
    ER: Сообщение успешно отправлено, появляется подтверждение
@@ -53,14 +53,26 @@
   "price": 150.75,
   "contract": "MANUAL_TEST",
   "name_rus": "Тест ручного QA",
-  "source": "manual_test"
+  "name_eng": "Manual QA Test",
+  "source": "manual_test",
+  "volume": 1000,
+  "currency": "USD",
+  "sync_timestamp": "2024-01-15T12:00:00Z"
 }
 ```
 
 **Test Data (для AKHQ):**
 ```
-{"id_value":999,"date":"2024-01-15","price":150.75,"contract":"MANUAL_TEST","name_rus":"Тест ручного QA","source":"manual_test"}
+{"id_value":999,"date":"2024-01-15","price":150.75,"contract":"MANUAL_TEST","name_rus":"Тест ручного QA","name_eng":"Manual QA Test","source":"manual_test","volume":1000,"currency":"USD","sync_timestamp":"2024-01-15T12:00:00Z"}
 ```
+**Evidence:** 
+- `TC-KAFKA-002_step1_akhq_main.jpg`
+- `TC-KAFKA-002_step2_topic_details.jpg`
+- `TC-KAFKA-002_step3_produce_form.jpg`
+- `TC-KAFKA-002_step4_message_sent.jpg`
+
+
+**Status:** ✅ Manual
 -----------------------------------------------------
 ### TC-KAFKA-003: Consumer Data Processing and CSV Export
 **Priority:** High  
@@ -265,6 +277,7 @@ Status: ✅ Manual
 ```
 
 Status: ✅ Manual
+
 
 
 
