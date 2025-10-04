@@ -331,13 +331,20 @@ Status: ✅ Manual
 **Test Steps:**
 1. Отправить пустое сообщение через AKHQ.  
    ER: Сообщение успешно отправляется в топик market-data
+   
+   **Test Data (для AKHQ):**
+   ```json
+   {}
+   ```
 2. Проверить логи consumer на обработку пустого сообщения.  
    ER: В логах consumer присутствуют ошибки валидации пустого сообщения
+   ```bash
+   docker-compose logs kafka-consumer --tail=20 > quality-assurance/test_results/TC-KAFKA-009_step2_consumer_logs.txt
+   ```
+**Evidence:**
+- TC-KAFKA-009_step1_message_sent.jpg - Отправка пустого сообщения через AKHQ UI
+- TC-KAFKA-009_step2_consumer_logs.txt - Логи Kafka consumer с ошибками валидации пустого сообщения
 
-**Test Data (для AKHQ):**
-```json
-{}
-```
 Status: ✅ Manual
 
 ---
@@ -383,6 +390,7 @@ Status: ✅ Manual
 ```
 
 Status: ✅ Manual
+
 
 
 
