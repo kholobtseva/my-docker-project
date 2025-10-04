@@ -2,16 +2,35 @@
 
 ## 📊 Executive Summary
 - **Test Suite**: Kafka Data Pipeline  
-- **Execution Date**: 2024-01-15
-- **Total Test Cases**: 11
-- **Passed**: 8 (73%)
-- **Failed**: 2 (18%) 
-- **Blocked**: 1 (9%)
-- **Bugs Found**: 3
+- **Execution Date**: 
+- **Total Test Cases**: 
+- **Passed**: 
+- **Failed**:  
+- **Blocked**: 
+- **Bugs Found**: 
 
 ---
 
 ## 🧪 Test Case Results
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ШАБЛОНЫ
+✅ PASS - все ок  
+❌ FAIL - тест не прошел  
+⏹️ BLOCKED - заблокирован багом/зависимостью  
+🟡 WARNING - есть проблемы, но не критичные  
 
 ### ✅ TC-KAFKA-001: Basic Kafka Connectivity
 
@@ -60,6 +79,6 @@
 2. [BUG-002](../bug_reports/bug_data_normalization.md) - Проблемы с валидацией данных
 
 ## 📈 Metrics
-- **Test Coverage**: 11/11 тест-кейсов создано
-- **Execution Progress**: 8/11 выполнено (73%)
-- **Critical Issues**: 1
+- **Test Coverage**: 
+- **Execution Progress**: 
+- **Critical Issues**: 
