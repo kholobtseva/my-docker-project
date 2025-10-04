@@ -11,17 +11,22 @@
 - Kafka брокер здоров
 
 **Test Steps:**
-1. Проверить статус контейнеров: `docker-compose ps`
-2. Проверить список топиков: `docker-compose exec kafka kafka-topics --list --bootstrap-server localhost:9092`
-3. Убедиться что топик `market-data` существует
-4. Проверить доступность Kafdrop: http://localhost:9000
+1. Проверить статус контейнеров: `docker-compose ps`.
+   ER: Все контейнеры в статусе "Up" 
+2. Проверить список топиков: `docker-compose exec kafka kafka-topics --list --bootstrap-server localhost:9092`.
+   ER: Топик market-data присутствует в списке.
+3. Проверить доступность Kafdrop: http://localhost:9000.
+   ER: Kafdrop доступен и отображает топики
 
-**Expected Results:**
-- Все контейнеры в статусе "Up" 
-- Топик `market-data` присутствует в списке
-- Kafdrop доступен и отображает топики
+**Status:** ✅ Automated in CI  ✅ Manual  
 
-**Status:** ✅ Automated in CI
+**Evidence:** 
+- `TC-KAFKA-001_step1_docker_containers_status.jpg`
+- `TC-KAFKA-001_step2_kafka_topics_list.jpg` 
+- `TC-KAFKA-001_step3_kafdrop_interface.jpg`
+
+**Result:** ✅ PASS  
+**Notes:** Все компоненты Kafka работают корректно, топик market-data создан
 
 ------------------------------------------------------
 
@@ -278,4 +283,5 @@ Status: ✅ Manual
 - Система не подвержена SQL-инъекциям или XSS атакам
 
 Status: ✅ Manual
+
 
