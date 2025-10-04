@@ -85,7 +85,7 @@
 **Test Steps:**
 1. Отправить тестовое сообщение через AKHQ.
    ```json
-   {"id_value":999,"date":"2025-10-04","price":150.75,"contract":"MANUAL_TEST","name_rus":"Тест ручного QA Consumer Data Processing and CSV Export","name_eng":"Manual QA Test Consumer Data Processing and CSV Export","source":"manual_test","volume":1000,"currency":"USD","sync_timestamp":"2025-10-04T12:00:00Z"}
+   {"id_value":999,"date":"2025-10-04","price":150.75,"contract":"MANUAL_TEST","name_rus":"Manual QA Test Data Processing","name_eng":"Manual QA Test Consumer Data Processing and CSV Export","source":"manual_test","volume":1000,"currency":"USD","sync_timestamp":"2025-10-04T12:00:00Z"}
    ```  
    ER: Сообщение появляется в топике market-data
 3. Проверить логи consumer: `docker-compose logs kafka-consumer`.  
@@ -96,6 +96,13 @@
    ER: Файл содержит данные отправленного сообщения
 6. Проверить нормализацию данных в CSV.  
    ER: Все поля корректно нормализованы (без лишних пробелов)
+
+**Evidence:** 
+- `TC-KAFKA-003_step1_message_in_topic.jpg` - Тестовое сообщение отправлено через AKHQ UI
+- `TC-KAFKA-003_step2_consumer_logs.txt` - Логи Kafka consumer с подтверждением получения сообщения
+- `TC-KAFKA-003_step3_csv_file_check.txt` - Проверка существования и прав доступа CSV файла
+- `TC-KAFKA-003_step4_csv_content.jpg` - Визуальная проверка структуры данных в CSV файле
+- `TC-KAFKA-003_step5_data_normalization.txt` - Текстовый анализ нормализации данных в CSV
 
 **Status:** ✅ Manual (можно автоматизировать позже)
 
@@ -280,6 +287,7 @@ Status: ✅ Manual
 ```
 
 Status: ✅ Manual
+
 
 
 
