@@ -21,6 +21,7 @@
 | 2 | `docker-compose exec kafka...` | Топик market-data существует | ✅ Топик найден | PASS | ![Топики](../screenshots/kafka_pipeline/TC-KAFKA-001_step2_kafka_topics_list.jpg) |
 | 3 | Открыть Kafdrop | Интерфейс доступен | ✅ Kafdrop открыт | PASS | ![Kafdrop](../screenshots/kafka_pipeline/TC-KAFKA-001_step3_kafdrop_interface.jpg) |
 
+Status: ✅ Manual ✅ PASSED
 ---
 ### TC-KAFKA-002: Manual Message Producing via AKHQ
 
@@ -31,6 +32,7 @@
 | 3 | Нажать "Produce message" | Открывается форма отправки | ✅ Форма открыта | PASS | ![Форма](../screenshots/kafka_pipeline/TC-KAFKA-002_step3_produce_form.jpg) |
 | 4 | Ввести и отправить сообщение | Сообщение успешно отправлено | ✅ Сообщение отправлено | PASS | ![Отправка](../screenshots/kafka_pipeline/TC-KAFKA-002_step4_message_sent.jpg) |
 
+Status: ✅ Manual ✅ PASSED
 ---
 ### TC-KAFKA-003: Consumer Data Processing and CSV Export
 
@@ -42,6 +44,7 @@
 | 4 | Проверить содержимое CSV файла | Файл содержит данные отправленного сообщения | ✅ Данные присутствуют | PASS | ![CSV](../screenshots/kafka_pipeline/TC-KAFKA-003_step4_csv_content.jpg) |
 | 5 | Проверить нормализацию данных | Все поля корректно нормализованы | ✅ Проблема с кириллицей в name_rus | WARNING | [Нормализация](../test_results/TC-KAFKA-003_step5_data_normalization.txt) |
 
+Status: ✅ Manual ✅ PASSED
 ---
 ### TC-KAFKA-004: Kafka Service Recovery After Restart
 
@@ -55,6 +58,7 @@
 | 7 | Отправить тестовое сообщение через AKHQ | Сообщение успешно отправляется в топик | ✅ Сообщение отправлено | PASS | ![AKHQ](../screenshots/kafka_pipeline/TC-KAFKA-004_step7_message_sent.jpg) |
 | 8 | Проверить обработку consumer | Consumer обрабатывает новое сообщение | ✅ Сообщение #628 получено и сохранено | PASS | [Логи](../test_results/TC-KAFKA-004_step8_consumer_processing.txt) |
 
+Status: ✅ Manual ✅ PASSED
 ---
 # ШАБЛОНЫ
 ✅ PASS - все ок  
