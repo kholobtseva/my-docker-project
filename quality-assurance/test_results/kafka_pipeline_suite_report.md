@@ -82,6 +82,15 @@ Status: ✅ Manual ❌ FAILED - Missing date validation (Bug BUG-KAFKA-006)
 Bug Reference: BUG-KAFKA-006_missing_date_validation.md
 
 ---
+
+### TC-KAFKA-007: Required Field Validation
+
+| Step | Action | Expected Result | Actual Result | Status | Evidence |
+|------|--------|-----------------|---------------|--------|----------|
+| 1 | Send message without required "price" field via AKHQ | Message successfully sent to market-data topic | Message successfully sent to topic | ✅ PASS | ![Step1](../screenshots/kafka_pipeline/TC-KAFKA-007_step1_message_sent.jpg) |
+| 2 | Check consumer logs for validation errors | Consumer logs show validation errors for required fields | WARNING: Missing required field: price. Message skipped | ✅ PASS | [Logs](../test_results/TC-KAFKA-007_step2_consumer_logs.txt) |
+
+---
 # ШАБЛОНЫ
 ✅ PASS - все ок  
 ❌ FAIL - тест не прошел  
