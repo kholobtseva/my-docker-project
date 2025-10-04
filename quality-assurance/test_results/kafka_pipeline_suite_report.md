@@ -43,6 +43,19 @@
 | 5 | Проверить нормализацию данных | Все поля корректно нормализованы | ✅ Проблема с кириллицей в name_rus | WARNING | [Нормализация](../test_results/TC-KAFKA-003_step5_data_normalization.txt) |
 
 ---
+### TC-KAFKA-004: Kafka Service Recovery After Restart
+
+| Step | Action | Expected Result | Actual Result | Status | Evidence |
+|------|--------|-----------------|---------------|--------|----------|
+| 1 | Остановить Kafka брокер | Kafka контейнер останавливается | ✅ Kafka успешно остановлен | PASS | [Статус](../test_results/TC-KAFKA-004_step1_all_containers_status.txt) |
+| 2 | Запустить python-script при недоступном Kafka | Скрипт запускается, но не может подключиться к Kafka | ✅ Скрипт запущен, ошибки подключения | PASS | [Логи](../test_results/TC-KAFKA-004_step2_python_script_logs.txt) |
+| 3-4 | Проверить логи на ошибки подключения | Найдены ошибки: DNS failed, NoBrokersAvailable | ✅ Все ошибки найдены в логах | PASS | [Анализ логов](../test_results/TC-KAFKA-004_step2_python_script_logs.txt) |
+| 5 | Запустить Kafka обратно | Kafka контейнер запускается | ✅ Kafka запущен и healthy | PASS | [Статус](../test_results/TC-KAFKA-004_step5_kafka_started.txt) |
+| 6 | Подождать 30 секунд | Соединение восстанавливается | ✅ Соединение восстановлено | PASS | - |
+| 7 | Отправить тестовое сообщение через AKHQ | Сообщение успешно отправляется в топик | ✅ Сообщение отправлено | PASS | ![AKHQ](../screenshots/kafka_pipeline/TC-KAFKA-004_step7_message_sent.jpg) |
+| 8 | Проверить обработку consumer | Consumer обрабатывает новое сообщение | ✅ Сообщение #628 получено и сохранено | PASS | [Логи](../test_results/TC-KAFKA-004_step8_consumer_processing.txt) |
+
+---
 # ШАБЛОНЫ
 ✅ PASS - все ок  
 ❌ FAIL - тест не прошел  
