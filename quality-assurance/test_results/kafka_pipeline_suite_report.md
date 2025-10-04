@@ -90,6 +90,18 @@ Bug Reference: BUG-KAFKA-006_missing_date_validation.md
 | 1 | Send message without required "price" field via AKHQ | Message successfully sent to market-data topic | Message successfully sent to topic | ✅ PASS | ![Step1](../screenshots/kafka_pipeline/TC-KAFKA-007_step1_message_sent.jpg) |
 | 2 | Check consumer logs for validation errors | Consumer logs show validation errors for required fields | WARNING: Missing required field: price. Message skipped | ✅ PASS | [Logs](../test_results/TC-KAFKA-007_step2_consumer_logs.txt) |
 
+Status: ✅ Manual ✅ PASSED
+---
+
+**Результаты TC-KAFKA-008:**
+
+| Step | Action | Expected Result | Actual Result | Status | Evidence |
+|------|--------|-----------------|---------------|--------|----------|
+| 1 | Send message with invalid JSON via AKHQ | Message successfully sent to market-data topic | Message successfully sent | ✅ PASS | ![Step1](../screenshots/kafka_pipeline/TC-KAFKA-008_step1_message_sent.jpg) |
+| 2 | Check consumer logs for parsing errors | Consumer logs show JSON parsing errors | Consumer crashed with JSONDecodeError | ❌ FAIL | [Logs](../test_results/TC-KAFKA-008_step2_consumer_logs.txt) |
+
+Status: ✅ Manual ❌ FAILED - Critical bug found (BUG-KAFKA-008)
+
 ---
 # ШАБЛОНЫ
 ✅ PASS - все ок  
