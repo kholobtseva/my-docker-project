@@ -130,6 +130,11 @@
     docker-compose stop kafka
     ```
    ER: Kafka контейнер останавливается
+   
+   Получить лог  
+   ```bash
+   docker-compose ps | grep kafka > quality-assurance/test_results/TC-KAFKA-004_step1_kafka_stopped.txt
+   ```
 2. Запустить python-script при недоступном Kafka:
    ```bash
    docker-compose up python-script
@@ -140,6 +145,10 @@
     docker-compose logs python-script --tail=20
     ```  
    ER: В логах присутствуют сообщения об ошибках подключения к Kafka  
+   Получить лог  
+   ```bash
+   docker-compose logs python-script --tail=30 > quality-assurance/test_results/TC-KAFKA-004_step2_python_script_logs.txt
+   ```  
 4. Проверить наличие в логах следующих сообщений об ошибках:  
    - "Не удалось подключиться к Kafka"
    - "Kafka connection error" 
@@ -151,6 +160,10 @@
     docker-compose start kafka
     ```
    ER: Kafka контейнер запускается  
+   Получить лог.
+   ```bash
+   docker-compose ps | grep kafka > quality-assurance/test_results/TC-KAFKA-004_step5_kafka_started.txt
+   ```  
 6. Подождать 30 секунд для восстановления соединения.
    ```bash
    sleep 30
@@ -167,7 +180,11 @@
      ```bash
      docker-compose logs kafka-consumer --tail=10
      ```
-   ER: В логах consumer присутствует запись об обработке нового сообщения
+   ER: В логах consumer присутствует запись об обработке нового сообщения  
+   Получить лог.
+   ```bash
+   docker-compose logs kafka-consumer --tail=15 > quality-assurance/test_results/TC-KAFKA-004_step8_consumer_processing.txt
+   ```
 
   **Evidence:** 
 - `TC-KAFKA-004_step1_kafka_stopped.jpg` - Подтверждение остановки Kafka контейнера
@@ -328,6 +345,7 @@ Status: ✅ Manual
 ```
 
 Status: ✅ Manual
+
 
 
 
