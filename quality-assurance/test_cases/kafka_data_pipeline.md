@@ -271,13 +271,23 @@ Status: ✅ Manual
 **Test Steps:**
 1. Отправить сообщение без обязательного поля "price" через AKHQ.  
    ER: Сообщение успешно отправляется в топик market-data
+   
+   **Test Data (для AKHQ):**
+   ```json
+   {"id_value":202,"date":"2025-10-04","contract":"FEFZ25"} 
+   ```
+   ER: Сообщение успешно отправляется в топик market-data
+   
 2. Проверить логи consumer на наличие ошибок валидации.  
    ER: В логах consumer присутствуют ошибки валидации обязательных полей
+   ```bash
+   docker-compose logs kafka-consumer --tail=20 > quality-assurance/test_results/TC-KAFKA-007_step2_consumer_logs.txt
+   ```
+**Evidence:**
 
-**Test Data (для AKHQ):**
-```json
-{"id_value":202,"date":"2025-01-15","contract":"FEFZ25"}
-```
+- TC-KAFKA-007_step1_message_sent.jpg - Отправка сообщения без обязательного поля через AKHQ UI
+- TC-KAFKA-007_step2_consumer_logs.txt - Логи Kafka consumer с ошибками валидации обязательных полей
+
 Status: ✅ Manual
 
 ---
@@ -365,6 +375,7 @@ Status: ✅ Manual
 ```
 
 Status: ✅ Manual
+
 
 
 
