@@ -60,6 +60,16 @@ Status: ✅ Manual ✅ PASSED
 
 Status: ✅ Manual ✅ PASSED
 ---
+### TC-KAFKA-005: Valid Message Processing
+
+| Step | Action | Expected Result | Actual Result | Status | Evidence |
+|------|--------|-----------------|---------------|--------|----------|
+| 1 | Send valid message via AKHQ | Message successfully sent to market-data topic | Message successfully sent to topic | ✅ PASS | ![Step1](../screenshots/kafka_pipeline/TC-KAFKA-005_step1_message_sent.jpg) |
+| 2 | Check consumer logs | Consumer log shows message processing record | Message #630 processed: FEFZ25 - 2025-10-04 | ✅ PASS | [Logs](../test_results/TC-KAFKA-005_step2_consumer_logs.txt) |
+| 3 | Check CSV file data | CSV file contains sent message data | Data saved to CSV: /app/logs/kafka_messages.csv | ✅ PASS | [CSV Content](../test_results/TC-KAFKA-005_step3_csv_content.txt) ![CSV Visual](../screenshots/kafka_pipeline/TC-KAFKA-005_step3_csv_content.jpg) |
+
+Status: ✅ Manual ✅ PASSED
+---
 # ШАБЛОНЫ
 ✅ PASS - все ок  
 ❌ FAIL - тест не прошел  
