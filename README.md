@@ -122,6 +122,7 @@ docker run -d kholobtseva/my-python-script:latest
 
 ![CI](https://github.com/kholobtseva/my-docker-project/actions/workflows/ci.yml/badge.svg)
 ![CD](https://github.com/kholobtseva/my-docker-project/actions/workflows/deploy.yml/badge.svg)
+![Allure Report](https://img.shields.io/badge/Allure-Reports-orange?logo=allure)
 
 Проект использует **полный цикл CI/CD** на GitHub Actions:
 

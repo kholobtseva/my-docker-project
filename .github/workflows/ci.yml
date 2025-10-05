@@ -19,48 +19,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest
-        
-    - name: Run all tests
-      run: |
-        python -m pytest tests/ -v
-        
-    - name: Verify project structure
-      run: |
-        echo "Проверка структуры проекта:"
-        ls -la
-        echo "---"
-        ls -la app/
-        echo "---"
-        [ -f "Dockerfile" ] && echo "✅ Dockerfile существует" || echo "❌ Dockerfile не найден"
-        [ -f "docker-compose.yml" ] && echo "✅ docker-compose.yml существует" || echo "❌ docker-compose.yml не найден"
-        [ -f "requirements.txt" ] && echo "✅ requirements.txt существует" || echo "❌ requirements.txt не найден"
-        
-    - name: Test Docker build
-      run: |
-        docker build -t my-python-script:ci-test .
-
-name: CI Pipeline
-
-on: [push, pull_request]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-        
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
         pip install pytest allure-pytest
         
     - name: Run tests with Allure
@@ -94,8 +52,12 @@ jobs:
       run: |
         echo "Project structure check:"
         ls -la
+        echo "---"
+        ls -la app/
+        echo "---"
         [ -f "Dockerfile" ] && echo "✅ Dockerfile exists" || echo "❌ Dockerfile not found"
         [ -f "docker-compose.yml" ] && echo "✅ docker-compose.yml exists" || echo "❌ docker-compose.yml not found"
+        [ -f "requirements.txt" ] && echo "✅ requirements.txt exists" || echo "❌ requirements.txt not found"
         
     - name: Test Docker build
       run: |
