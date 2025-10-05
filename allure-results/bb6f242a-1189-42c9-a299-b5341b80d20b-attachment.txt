@@ -1,0 +1,1 @@
+{"id_value":203,"date":"2025-10-04","price":106.25,"contract":"FEFZ25","name_rus":"Iron Ore 62% Fe","source":"moex_sgx"

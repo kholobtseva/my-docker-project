@@ -6,3 +6,5 @@ psycopg2-binary==2.9.9
 pytest==8.4.2
 elasticsearch==7.17.0
 kafka-python==2.0.2
+allure-pytest==2.13.2
+allure-python-commons==2.13.2
