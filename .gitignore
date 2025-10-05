@@ -49,3 +49,8 @@ docker-compose.override.yml
 # Temporary files
 *.tmp
 *.temp
+
+# Allure test reports
+allure-results/
+allure-report/
+.allure/

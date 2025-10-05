@@ -1,1 +1,0 @@
-{'id_value': 205, 'date': '2025-10-04; DROP TABLE agriculture_moex; --', 'price': 106.25, 'contract': 'FEFZ25', 'name_rus': "<script>alert('xss')</script>", 'source': 'moex_sgx'}
