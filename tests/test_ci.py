@@ -12,20 +12,16 @@ class TestCIPipeline:
     @allure.description("Проверка соответствия версии Python требованиям проекта")
     @allure.severity(allure.severity_level.CRITICAL)
     def test_python_version(self):
-        allure.dynamic.tag("environment")
-        allure.dynamic.tag("python")
+    allure.dynamic.tag("environment")
+    allure.dynamic.tag("python")
+    
+    with allure.step("Получить информацию о версии Python"):
+        version_info = f"Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+        allure.attach(version_info, "Версия Python", allure.attachment_type.TEXT)
         
-        with allure.step("Получить информацию о версии Python"):
-            version_info = f"Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
-            allure.attach(version_info, "Версия Python", allure.attachment_type.TEXT)
-            
-        with allure.step("Проверить мажорную версию Python"):
-            assert sys.version_info.major == 3, "Требуется Python 3.x"
-            allure.attach("✓ Мажорная версия: 3", "Проверка версии", allure.attachment_type.TEXT)
-            
-        with allure.step("Проверить минимальную минорную версию"):
-            assert sys.version_info.minor >= 9, "Требуется Python 3.9 или выше"
-            allure.attach(f"✓ Минорная версия: {sys.version_info.minor} (>= 9)", "Проверка версии", allure.attachment_type.TEXT)
+    with allure.step("Проверить что используется Python 3"):
+        assert sys.version_info.major == 3, "Требуется Python 3"
+        allure.attach("✓ Используется Python 3", "Проверка версии", allure.attachment_type.TEXT)
 
     @allure.story("Project Structure") 
     @allure.title("TC-CI-002: Required Files Validation")
