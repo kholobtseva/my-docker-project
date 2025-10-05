@@ -14,11 +14,8 @@ class TestKafkaManual:
         allure.dynamic.tag("kafka")
         
         with allure.step("Check container status"):
-            with open("quality-assurance/test_results/TC-KAFKA-001_step1_docker_containers_status.txt", "r", encoding='utf-16') as f:
-                container_log = f.read()
-            allure.attach(container_log, "Docker containers status", allure.attachment_type.TEXT)
             allure.attach.file("quality-assurance/screenshots/kafka_pipeline/TC-KAFKA-001_step1_docker_containers_status.jpg", 
-                             "Docker containers status visual", allure.attachment_type.JPG)
+                             "Docker containers status", allure.attachment_type.JPG)
             
         with allure.step("Check topics list"):
             allure.attach.file("quality-assurance/screenshots/kafka_pipeline/TC-KAFKA-001_step2_kafka_topics_list.jpg", 
@@ -46,8 +43,7 @@ class TestKafkaManual:
         }
         
         with allure.step("Open AKHQ in browser"):
-            allure.attach.file("quality-assurance/screenshots/kafka_pipeline/TC-KAFKA-002_step1_akha_main.jpg", 
-                             "AKHQ main interface", allure.attachment_type.JPG)
+            allure.attach("http://localhost:8080", "AKHQ interface URL", allure.attachment_type.TEXT)
             
         with allure.step("Navigate to market-data topic"):
             allure.attach.file("quality-assurance/screenshots/kafka_pipeline/TC-KAFKA-002_step2_topic_details.jpg", 
