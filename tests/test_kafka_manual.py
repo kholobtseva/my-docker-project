@@ -14,12 +14,15 @@ class TestKafkaManual:
         allure.dynamic.tag("kafka")
         
         with allure.step("Check container status"):
-            with open("quality-assurance/test_results/TC-KAFKA-004_step1_all_containers_status.txt", "r", encoding='utf-16') as f:
+            with open("quality-assurance/test_results/TC-KAFKA-001_step1_docker_containers_status.txt", "r", encoding='utf-16') as f:
                 container_log = f.read()
             allure.attach(container_log, "Docker containers status", allure.attachment_type.TEXT)
+            allure.attach.file("quality-assurance/screenshots/kafka_pipeline/TC-KAFKA-001_step1_docker_containers_status.jpg", 
+                             "Docker containers status visual", allure.attachment_type.JPG)
             
         with allure.step("Check topics list"):
-            allure.attach("kafka-topics --list", "market-data topic exists")
+            allure.attach.file("quality-assurance/screenshots/kafka_pipeline/TC-KAFKA-001_step2_kafka_topics_list.jpg", 
+                             "Kafka topics list", allure.attachment_type.JPG)
             
         with allure.step("Check Kafdrop availability"):
             allure.attach.file("quality-assurance/screenshots/kafka_pipeline/TC-KAFKA-001_step3_kafdrop_interface.jpg", 
@@ -43,17 +46,21 @@ class TestKafkaManual:
         }
         
         with allure.step("Open AKHQ in browser"):
-            allure.attach("http://localhost:8080", "AKHQ interface opens")
+            allure.attach.file("quality-assurance/screenshots/kafka_pipeline/TC-KAFKA-002_step1_akha_main.jpg", 
+                             "AKHQ main interface", allure.attachment_type.JPG)
             
         with allure.step("Navigate to market-data topic"):
-            allure.attach("Navigation", "Topic page displays partition info")
+            allure.attach.file("quality-assurance/screenshots/kafka_pipeline/TC-KAFKA-002_step2_topic_details.jpg", 
+                             "Topic details page", allure.attachment_type.JPG)
             
         with allure.step("Click 'Produce to topic'"):
-            allure.attach("Send form", "Message sending form opens")
+            allure.attach.file("quality-assurance/screenshots/kafka_pipeline/TC-KAFKA-002_step3_produce_forming.jpg", 
+                             "Produce message form", allure.attachment_type.JPG)
             
         with allure.step("Enter test message and send"):
-            allure.attach("test_data", str(test_data), allure.attachment_type.JSON)
-            allure.attach("Result", "Message sent successfully, confirmation appears")
+            allure.attach(str(test_data), "Test message data", allure.attachment_type.JSON)
+            allure.attach.file("quality-assurance/screenshots/kafka_pipeline/TC-KAFKA-002_step4_message_sent.jpg", 
+                             "Message sent confirmation", allure.attachment_type.JPG)
             
     @allure.story("Consumer Data Processing") 
     @allure.title("TC-KAFKA-003: Consumer Data Processing and CSV Export")
@@ -95,6 +102,8 @@ class TestKafkaManual:
         allure.dynamic.tag("restart")
         
         with allure.step("Stop Kafka broker"):
+            allure.attach.file("quality-assurance/screenshots/kafka_pipeline/TC-KAFKA-004_step1_kafka_stopped.jpg", 
+                             "Kafka stopped status", allure.attachment_type.JPG)
             with open("quality-assurance/test_results/TC-KAFKA-004_step1_all_containers_status.txt", "r", encoding='utf-16') as f:
                 container_status = f.read()
             allure.attach(container_status, "Container status after stop", allure.attachment_type.TEXT)
