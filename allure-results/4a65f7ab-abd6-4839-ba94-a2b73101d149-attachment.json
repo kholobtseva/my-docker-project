@@ -1,0 +1,14 @@
+[
+  {
+    "name": "FEFF24",
+    "daily-settlement-price-abs": 105.75,
+    "total-volume": 1250,
+    "formatted_date": "2024-01-15"
+  },
+  {
+    "name": "FEFF24",
+    "daily-settlement-price-abs": 106.25,
+    "total-volume": 1800,
+    "formatted_date": "2024-01-16"
+  }
+]
