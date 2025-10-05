@@ -14,8 +14,7 @@ class TestKafkaManual:
         allure.dynamic.tag("kafka")
         
         with allure.step("Check container status"):
-            # Добавляем реальный лог
-            with open("quality-assurance/test_results/TC-KAFKA-004_step1_all_containers_status.txt", "r") as f:
+            with open("quality-assurance/test_results/TC-KAFKA-004_step1_all_containers_status.txt", "r", encoding='utf-16') as f:
                 container_log = f.read()
             allure.attach(container_log, "Docker containers status", allure.attachment_type.TEXT)
             
@@ -23,7 +22,6 @@ class TestKafkaManual:
             allure.attach("kafka-topics --list", "market-data topic exists")
             
         with allure.step("Check Kafdrop availability"):
-            # Добавляем реальный скриншот
             allure.attach.file("quality-assurance/screenshots/kafka_pipeline/TC-KAFKA-001_step3_kafdrop_interface.jpg", 
                              "Kafdrop interface", allure.attachment_type.JPG)
     
@@ -57,7 +55,6 @@ class TestKafkaManual:
             allure.attach("test_data", str(test_data), allure.attachment_type.JSON)
             allure.attach("Result", "Message sent successfully, confirmation appears")
             
-            
     @allure.story("Consumer Data Processing") 
     @allure.title("TC-KAFKA-003: Consumer Data Processing and CSV Export")
     @allure.description("Check message processing by consumer and CSV export")
@@ -73,17 +70,17 @@ class TestKafkaManual:
                              "Message in Kafka topic", allure.attachment_type.JPG)
             
         with allure.step("Check consumer logs"):
-            with open("quality-assurance/test_results/TC-KAFKA-003_step2_consumer_logs.txt", "r") as f:
+            with open("quality-assurance/test_results/TC-KAFKA-003_step2_consumer_logs.txt", "r", encoding='utf-16') as f:
                 consumer_log = f.read()
             allure.attach(consumer_log, "Consumer processing logs", allure.attachment_type.TEXT)
             
         with allure.step("Check CSV file creation"):
-            with open("quality-assurance/test_results/TC-KAFKA-003_step3_csv_file_check.txt", "r") as f:
+            with open("quality-assurance/test_results/TC-KAFKA-003_step3_csv_file_check.txt", "r", encoding='utf-16') as f:
                 csv_check = f.read()
             allure.attach(csv_check, "CSV file check", allure.attachment_type.TEXT)
             
         with allure.step("Verify CSV data content"):
-            with open("quality-assurance/test_results/TC-KAFKA-003_step5_data_normalization.txt", "r") as f:
+            with open("quality-assurance/test_results/TC-KAFKA-003_step5_data_normalization.txt", "r", encoding='utf-16') as f:
                 csv_content = f.read()
             allure.attach(csv_content, "CSV data normalization", allure.attachment_type.TEXT)
             allure.attach.file("quality-assurance/screenshots/kafka_pipeline/TC-KAFKA-003_step4_csv_content.jpg", 
@@ -98,22 +95,22 @@ class TestKafkaManual:
         allure.dynamic.tag("restart")
         
         with allure.step("Stop Kafka broker"):
-            with open("quality-assurance/test_results/TC-KAFKA-004_step1_all_containers_status.txt", "r") as f:
+            with open("quality-assurance/test_results/TC-KAFKA-004_step1_all_containers_status.txt", "r", encoding='utf-16') as f:
                 container_status = f.read()
             allure.attach(container_status, "Container status after stop", allure.attachment_type.TEXT)
             
         with allure.step("Check producer connection errors"):
-            with open("quality-assurance/test_results/TC-KAFKA-004_step2_python_script_logs.txt", "r") as f:
+            with open("quality-assurance/test_results/TC-KAFKA-004_step2_python_script_logs.txt", "r", encoding='utf-16') as f:
                 error_logs = f.read()
             allure.attach(error_logs, "Producer connection errors", allure.attachment_type.TEXT)
             
         with allure.step("Start Kafka broker"):
-            with open("quality-assurance/test_results/TC-KAFKA-004_step5_kafka_started.txt", "r") as f:
+            with open("quality-assurance/test_results/TC-KAFKA-004_step5_kafka_started.txt", "r", encoding='utf-16') as f:
                 kafka_start = f.read()
             allure.attach(kafka_start, "Kafka startup status", allure.attachment_type.TEXT)
             
         with allure.step("Verify message processing recovery"):
-            with open("quality-assurance/test_results/TC-KAFKA-004_step8_consumer_processing.txt", "r") as f:
+            with open("quality-assurance/test_results/TC-KAFKA-004_step8_consumer_processing.txt", "r", encoding='utf-16') as f:
                 recovery_logs = f.read()
             allure.attach(recovery_logs, "Consumer recovery logs", allure.attachment_type.TEXT)
             allure.attach.file("quality-assurance/screenshots/kafka_pipeline/TC-KAFKA-004_step7_message_sent.jpg", 
@@ -134,12 +131,12 @@ class TestKafkaManual:
                              "Message sent via AKHQ", allure.attachment_type.JPG)
             
         with allure.step("Check consumer processing"):
-            with open("quality-assurance/test_results/TC-KAFKA-005_step2_consumer_logs.txt", "r") as f:
+            with open("quality-assurance/test_results/TC-KAFKA-005_step2_consumer_logs.txt", "r", encoding='utf-16') as f:
                 consumer_log = f.read()
             allure.attach(consumer_log, "Consumer processing log", allure.attachment_type.TEXT)
             
         with allure.step("Verify CSV data export"):
-            with open("quality-assurance/test_results/TC-KAFKA-005_step3_csv_content.txt", "r") as f:
+            with open("quality-assurance/test_results/TC-KAFKA-005_step3_csv_content.txt", "r", encoding='utf-16') as f:
                 csv_content = f.read()
             allure.attach(csv_content, "CSV content", allure.attachment_type.TEXT)
             allure.attach.file("quality-assurance/screenshots/kafka_pipeline/TC-KAFKA-005_step3_csv_content.jpg", 
@@ -160,7 +157,7 @@ class TestKafkaManual:
                              "Message sent with invalid date", allure.attachment_type.JPG)
             
         with allure.step("Check consumer validation warnings"):
-            with open("quality-assurance/test_results/TC-KAFKA-006_step2_consumer_logs.txt", "r") as f:
+            with open("quality-assurance/test_results/TC-KAFKA-006_step2_consumer_logs.txt", "r", encoding='utf-16') as f:
                 validation_logs = f.read()
             allure.attach(validation_logs, "Date validation warnings", allure.attachment_type.TEXT)
 
@@ -179,7 +176,7 @@ class TestKafkaManual:
                              "Message without price field", allure.attachment_type.JPG)
             
         with allure.step("Check consumer validation errors"):
-            with open("quality-assurance/test_results/TC-KAFKA-007_step2_consumer_logs.txt", "r") as f:
+            with open("quality-assurance/test_results/TC-KAFKA-007_step2_consumer_logs.txt", "r", encoding='utf-16') as f:
                 validation_logs = f.read()
             allure.attach(validation_logs, "Required field validation errors", allure.attachment_type.TEXT)
 
@@ -198,7 +195,7 @@ class TestKafkaManual:
                              "Invalid JSON sent", allure.attachment_type.JPG)
             
         with allure.step("Check consumer JSON parsing errors"):
-            with open("quality-assurance/test_results/TC-KAFKA-008_step2_consumer_logs.txt", "r") as f:
+            with open("quality-assurance/test_results/TC-KAFKA-008_step2_consumer_logs.txt", "r", encoding='utf-16') as f:
                 parsing_logs = f.read()
             allure.attach(parsing_logs, "JSON parsing errors", allure.attachment_type.TEXT)
 
@@ -217,7 +214,7 @@ class TestKafkaManual:
                              "Empty message sent", allure.attachment_type.JPG)
             
         with allure.step("Check consumer empty message handling"):
-            with open("quality-assurance/test_results/TC-KAFKA-009_step2_consumer_logs.txt", "r") as f:
+            with open("quality-assurance/test_results/TC-KAFKA-009_step2_consumer_logs.txt", "r", encoding='utf-16') as f:
                 empty_handling_logs = f.read()
             allure.attach(empty_handling_logs, "Empty message handling", allure.attachment_type.TEXT)
 
@@ -236,7 +233,7 @@ class TestKafkaManual:
                              "Large message sent", allure.attachment_type.JPG)
             
         with allure.step("Check large message processing"):
-            with open("quality-assurance/test_results/TC-KAFKA-010_step2_consumer_logs.txt", "r") as f:
+            with open("quality-assurance/test_results/TC-KAFKA-010_step2_consumer_logs.txt", "r", encoding='utf-16') as f:
                 large_msg_logs = f.read()
             allure.attach(large_msg_logs, "Large message processing", allure.attachment_type.TEXT)
 
@@ -255,6 +252,6 @@ class TestKafkaManual:
                              "Dangerous data sent", allure.attachment_type.JPG)
             
         with allure.step("Check data sanitization in CSV"):
-            with open("quality-assurance/test_results/TC-KAFKA-011_step2_csv_content.txt", "r") as f:
+            with open("quality-assurance/test_results/TC-KAFKA-011_step2_csv_content.txt", "r", encoding='utf-16') as f:
                 sanitized_csv = f.read()
             allure.attach(sanitized_csv, "Sanitized CSV data", allure.attachment_type.TEXT)
