@@ -113,6 +113,7 @@ INSERT INTO public.www_data_idx (id, mask, name_rus, name_eng, source, url, desc
 (235, NULL, 'Железная руда 62% Fe', 'FEFN28', 'ore_futures', 'https://api.sgx.com/derivatives/v1.0/history/symbol/', NULL, '2025-07-09'),
 (236, NULL, 'Железная руда 62% Fe', 'FEFQ28', 'ore_futures', 'https://api.sgx.com/derivatives/v1.0/history/symbol/', NULL, '2025-08-27'),
 (237, NULL, 'Железная руда 62% Fe', 'FEFU28', 'ore_futures', 'https://api.sgx.com/derivatives/v1.0/history/symbol/', NULL, '2025-09-21')
+
 ON CONFLICT (id) DO NOTHING;
 
 -- Обновляем последовательность

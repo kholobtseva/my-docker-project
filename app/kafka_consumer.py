@@ -1,3 +1,4 @@
+# app/kafka_consumer_refactored.py - Полная версия consumer с использованием модулей
 import json
 import logging
 import csv
@@ -6,58 +7,17 @@ import time
 import signal
 import sys
 from datetime import datetime
-from kafka import KafkaConsumer, KafkaProducer
+from kafka import KafkaProducer
 from kafka.errors import NoBrokersAvailable
 import jsonschema
 from jsonschema import validate
-from elasticsearch import Elasticsearch
 
+# Импортируем наши модули
+from core.logging_utils import setup_logging
+from core.kafka_utils import create_kafka_consumer, KafkaManager
 
-# Logging setup
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Структурированный форматтер для Elasticsearch
-class ElasticsearchJSONFormatter(logging.Formatter):
-    def format(self, record):
-        log_entry = {
-            'timestamp': datetime.now().isoformat(),
-            'level': record.levelname,
-            'logger': 'kafka_consumer',
-            'message': record.getMessage(),
-            'module': record.module,
-            'function': record.funcName
-        }
-        
-        # Добавляем extra данные если есть
-        if hasattr(record, 'extra_data'):
-            log_entry.update(record.extra_data)
-            
-        return json.dumps(log_entry)
-        
-# Клиент для логов (отдельный от основного)
-es_logs = Elasticsearch(['http://elasticsearch:9200'])
-
-class ElasticsearchLogHandler(logging.Handler):
-    def emit(self, record):
-        try:
-            log_entry = json.loads(self.format(record))
-            es_logs.index(index='kafka-consumer-logs', body=log_entry)
-        except Exception as e:
-            # Если не получится отправить в ES - логи просто пропадут, но пайплайн продолжит работу
-            pass
-
-# Добавляем хендлер (основное логирование в stdout останется)
-es_handler = ElasticsearchLogHandler()
-es_handler.setFormatter(ElasticsearchJSONFormatter())
-logger.addHandler(es_handler)
-        
-
-
-# Настройка JSON логгера
-json_handler = logging.StreamHandler()
-json_handler.setFormatter(ElasticsearchJSONFormatter())
-logger.addHandler(json_handler)
+# Настройка логирования
+logger = setup_logging('kafka_consumer')
 
 # Data validation schema
 DATA_SCHEMA = {
@@ -82,15 +42,11 @@ def validate_date_format(date_str):
         return False
         
     try:
-        # Пробуем распарсить дату в формате YYYY-MM-DD
         parsed_date = datetime.strptime(date_str, '%Y-%m-%d')
-        
-        # Дополнительная проверка что это реальная дата (не 2024-02-30)
         if (parsed_date.year < 1900 or parsed_date.year > 2100 or
             parsed_date.month < 1 or parsed_date.month > 12 or
             parsed_date.day < 1 or parsed_date.day > 31):
             return False
-            
         return True
     except ValueError:
         return False
@@ -108,14 +64,14 @@ class DeadLetterQueueProducer:
                 bootstrap_servers=self.bootstrap_servers,
                 value_serializer=lambda v: json.dumps(v, ensure_ascii=False).encode('utf-8')
             )
-            logger.info("SUCCESS DLQ producer initialized", extra={
+            logger.info("DLQ producer initialized", extra={
                 'extra_data': {
                     'event_type': 'dlq_producer_initialized',
                     'status': 'success'
                 }
             })
         except Exception as e:
-            logger.error("ERROR Failed to initialize DLQ producer", extra={
+            logger.error("Failed to initialize DLQ producer", extra={
                 'extra_data': {
                     'event_type': 'dlq_producer_error',
                     'error': str(e),
@@ -146,7 +102,7 @@ class DeadLetterQueueProducer:
         try:
             future = self.producer.send('market-data-dlq', dlq_message)
             future.get(timeout=10)
-            logger.warning("DLQ Sent invalid message to DLQ", extra={
+            logger.warning("Sent invalid message to DLQ", extra={
                 'extra_data': {
                     'event_type': 'dlq_message_sent',
                     'error_reason': error_reason,
@@ -155,7 +111,7 @@ class DeadLetterQueueProducer:
             })
             return True
         except Exception as e:
-            logger.error("ERROR Failed to send to DLQ", extra={
+            logger.error("Failed to send to DLQ", extra={
                 'extra_data': {
                     'event_type': 'dlq_send_error',
                     'error': str(e),
@@ -173,7 +129,7 @@ def normalize_value(value, default=''):
 def validate_payload(payload):
     """Validate required fields in payload including date format"""
     if not payload:
-        logger.error("ERROR Empty payload", extra={
+        logger.error("Empty payload", extra={
             'extra_data': {
                 'event_type': 'validation_error',
                 'error_type': 'empty_payload'
@@ -181,11 +137,10 @@ def validate_payload(payload):
         })
         return False, "Empty payload"
     
-    # Проверка обязательных полей
     required_fields = ['contract', 'date', 'price']
     for field in required_fields:
         if field not in payload:
-            logger.warning("WARNING Missing required field", extra={
+            logger.warning("Missing required field", extra={
                 'extra_data': {
                     'event_type': 'validation_warning',
                     'missing_field': field,
@@ -194,10 +149,9 @@ def validate_payload(payload):
             })
             return False, f"Missing required field: {field}"
     
-    # Валидация формата даты
     date_value = payload.get('date')
     if not validate_date_format(date_value):
-        logger.warning("WARNING Invalid date format", extra={
+        logger.warning("Invalid date format", extra={
             'extra_data': {
                 'event_type': 'validation_warning',
                 'error_type': 'invalid_date_format',
@@ -206,12 +160,11 @@ def validate_payload(payload):
         })
         return False, f"Invalid date format: {date_value}. Expected YYYY-MM-DD"
     
-    # Валидация по JSON схеме
     try:
         validate(instance=payload, schema=DATA_SCHEMA)
         return True, "Valid"
     except jsonschema.ValidationError as e:
-        logger.warning("WARNING Schema validation failed", extra={
+        logger.warning("Schema validation failed", extra={
             'extra_data': {
                 'event_type': 'schema_validation_failed',
                 'error': e.message,
@@ -220,7 +173,7 @@ def validate_payload(payload):
         })
         return False, f"Schema validation failed: {e.message}"
     except Exception as e:
-        logger.warning("WARNING Validation error", extra={
+        logger.warning("Validation error", extra={
             'extra_data': {
                 'event_type': 'validation_error',
                 'error_type': 'general_validation_error',
@@ -238,11 +191,10 @@ def save_to_csv(data, filename='kafka_messages.csv'):
         
         filepath = os.path.join(log_dir, filename)
         
-        # Check required fields
         payload = data.get('payload', {})
         is_valid, validation_msg = validate_payload(payload)
         if not is_valid:
-            logger.error("ERROR Invalid payload", extra={
+            logger.error("Invalid payload", extra={
                 'extra_data': {
                     'event_type': 'csv_save_failed',
                     'reason': 'invalid_payload',
@@ -252,7 +204,6 @@ def save_to_csv(data, filename='kafka_messages.csv'):
             })
             return False
         
-        # Improved file check - always write headers for empty file
         file_exists = os.path.isfile(filepath)
         if file_exists:
             is_empty = os.path.getsize(filepath) == 0
@@ -264,7 +215,6 @@ def save_to_csv(data, filename='kafka_messages.csv'):
         with open(filepath, mode, newline='', encoding='utf-8') as f:
             writer = csv.writer(f, delimiter=';')
             
-            # Write headers if file is new OR empty
             if mode == 'w' or is_empty:
                 headers = [
                     'kafka_timestamp', 'message_offset', 'message_count',
@@ -272,7 +222,7 @@ def save_to_csv(data, filename='kafka_messages.csv'):
                     'name_rus', 'source', 'sync_timestamp'
                 ]
                 writer.writerow(headers)
-                logger.info("INFO CSV headers written", extra={
+                logger.info("CSV headers written", extra={
                     'extra_data': {
                         'event_type': 'csv_headers_written',
                         'filepath': filepath,
@@ -280,7 +230,6 @@ def save_to_csv(data, filename='kafka_messages.csv'):
                     }
                 })
             
-            # Normalized data extraction
             row = [
                 normalize_value(data.get('kafka_timestamp'), datetime.now().isoformat()),
                 normalize_value(data.get('message_offset')),
@@ -297,7 +246,7 @@ def save_to_csv(data, filename='kafka_messages.csv'):
             
             writer.writerow(row)
         
-        logger.info("SAVED Data saved to CSV", extra={
+        logger.info("Data saved to CSV", extra={
             'extra_data': {
                 'event_type': 'csv_save_success',
                 'filepath': filepath,
@@ -309,7 +258,7 @@ def save_to_csv(data, filename='kafka_messages.csv'):
         return True
         
     except Exception as e:
-        logger.error("ERROR CSV save error", extra={
+        logger.error("CSV save error", extra={
             'extra_data': {
                 'event_type': 'csv_save_error',
                 'error': str(e),
@@ -323,11 +272,10 @@ def process_message(message, message_count, dlq_producer):
     """Process single Kafka message with error handling"""
     start_time = datetime.now()
     try:
-        # РУЧНОЙ ПАРСИНГ JSON с обработкой ошибок
         try:
             data = json.loads(message.value.decode('utf-8'))
         except json.JSONDecodeError as e:
-            logger.error("ERROR JSON decode error", extra={
+            logger.error("JSON decode error", extra={
                 'extra_data': {
                     'event_type': 'json_decode_error',
                     'message_count': message_count,
@@ -353,7 +301,6 @@ def process_message(message, message_count, dlq_producer):
             }
         })
         
-        # Validate data schema
         is_valid, validation_msg = validate_payload(data)
         if not is_valid:
             dlq_producer.send_to_dlq(
@@ -363,7 +310,6 @@ def process_message(message, message_count, dlq_producer):
             )
             return False
         
-        # Prepare data for CSV
         enriched_data = {
             'kafka_timestamp': datetime.now().isoformat(),
             'message_offset': message.offset,
@@ -371,7 +317,6 @@ def process_message(message, message_count, dlq_producer):
             'payload': data
         }
         
-        # Save to CSV
         if save_to_csv(enriched_data):
             processing_time = (datetime.now() - start_time).total_seconds() * 1000
             logger.info("Message processed successfully", extra={
@@ -387,7 +332,7 @@ def process_message(message, message_count, dlq_producer):
             })
             return True
         else:
-            logger.error("ERROR Failed to save message", extra={
+            logger.error("Failed to save message", extra={
                 'extra_data': {
                     'event_type': 'message_processing_failed',
                     'contract': data.get('contract'),
@@ -399,7 +344,7 @@ def process_message(message, message_count, dlq_producer):
             
     except Exception as e:
         processing_time = (datetime.now() - start_time).total_seconds() * 1000
-        logger.error("ERROR Message processing error", extra={
+        logger.error("Message processing error", extra={
             'extra_data': {
                 'event_type': 'message_processing_error',
                 'message_count': message_count,
@@ -427,36 +372,32 @@ def run_consumer():
     
     dlq_producer = DeadLetterQueueProducer(['kafka:9092'])
     
-    # Retry logic for consumer initialization
     max_retries = 5
     retry_delay = 10
     
     for attempt in range(max_retries):
         try:
-            consumer = KafkaConsumer(
-                'market-data',
-                bootstrap_servers=['kafka:9092'],
-                auto_offset_reset='earliest',
-                value_deserializer=lambda m: m,  # СЫРЫЕ БАЙТЫ вместо автоматического парсинга
-                group_id='csv_writer_group',
-                enable_auto_commit=True,
-                session_timeout_ms=30000,
-                heartbeat_interval_ms=10000
+            consumer = create_kafka_consumer(
+                topic='market-data',
+                group_id='csv_writer_group'
             )
             
-            logger.info("STARTED Kafka consumer started", extra={
-                'extra_data': {
-                    'event_type': 'consumer_initialized',
-                    'status': 'success',
-                    'attempt': attempt + 1,
-                    'topic': 'market-data',
-                    'group_id': 'csv_writer_group'
-                }
-            })
-            break
-            
+            if consumer:
+                logger.info("Kafka consumer started", extra={
+                    'extra_data': {
+                        'event_type': 'consumer_initialized',
+                        'status': 'success',
+                        'attempt': attempt + 1,
+                        'topic': 'market-data',
+                        'group_id': 'csv_writer_group'
+                    }
+                })
+                break
+            else:
+                raise NoBrokersAvailable("Failed to create consumer")
+                
         except NoBrokersAvailable as e:
-            logger.warning("WARNING Kafka brokers not available", extra={
+            logger.warning("Kafka brokers not available", extra={
                 'extra_data': {
                     'event_type': 'broker_connection_retry',
                     'attempt': attempt + 1,
@@ -467,7 +408,7 @@ def run_consumer():
             if attempt < max_retries - 1:
                 time.sleep(retry_delay)
             else:
-                logger.error("ERROR Failed to connect to Kafka after all retries", extra={
+                logger.error("Failed to connect to Kafka after all retries", extra={
                     'extra_data': {
                         'event_type': 'broker_connection_failed',
                         'retries': max_retries,
@@ -476,7 +417,7 @@ def run_consumer():
                 })
                 return
         except Exception as e:
-            logger.error("ERROR Consumer initialization error", extra={
+            logger.error("Consumer initialization error", extra={
                 'extra_data': {
                     'event_type': 'consumer_init_error',
                     'error': str(e)
@@ -484,9 +425,8 @@ def run_consumer():
             })
             return
     
-    # Graceful shutdown handler
     def shutdown_handler(signum, frame):
-        logger.info("STOP Consumer shutdown initiated", extra={
+        logger.info("Consumer shutdown initiated", extra={
             'extra_data': {
                 'event_type': 'consumer_shutdown',
                 'signal': signum,
@@ -504,7 +444,6 @@ def run_consumer():
     message_count = 0
     
     try:
-        # Main message processing loop
         for message in consumer:
             message_count += 1
             try:
@@ -518,7 +457,7 @@ def run_consumer():
                         }
                     })
                 else:
-                    logger.warning("SKIPPED Message skipped due to errors", extra={
+                    logger.warning("Message skipped due to errors", extra={
                         'extra_data': {
                             'event_type': 'message_skipped',
                             'message_count': message_count,
@@ -526,31 +465,30 @@ def run_consumer():
                         }
                     })
             except Exception as e:
-                logger.error("ERROR Failed to process message", extra={
+                logger.error("Failed to process message", extra={
                     'extra_data': {
                         'event_type': 'message_processing_critical_error',
                         'message_count': message_count,
                         'error': str(e)
                     }
                 })
-                # Отправляем в DLQ
                 raw_value = message.value.decode('utf-8', errors='replace')[:500] if hasattr(message, 'value') else "No message value"
                 dlq_producer.send_to_dlq(
                     original_message=None,
                     error_reason=f"Message processing failed: {str(e)}",
                     raw_value=raw_value
                 )
-                continue  # Продолжаем работу
+                continue
                 
     except KeyboardInterrupt:
-        logger.info("STOP Consumer stopped by user", extra={
+        logger.info("Consumer stopped by user", extra={
             'extra_data': {
                 'event_type': 'consumer_stopped_by_user',
                 'total_messages_processed': message_count
             }
         })
     except Exception as e:
-        logger.error("ERROR Critical consumer error", extra={
+        logger.error("Critical consumer error", extra={
             'extra_data': {
                 'event_type': 'consumer_critical_error',
                 'error': str(e),
@@ -561,7 +499,7 @@ def run_consumer():
         consumer.close()
         if dlq_producer.producer:
             dlq_producer.producer.close()
-        logger.info("STOP Consumer stopped gracefully", extra={
+        logger.info("Consumer stopped gracefully", extra={
             'extra_data': {
                 'event_type': 'consumer_stopped',
                 'total_messages_processed': message_count,
