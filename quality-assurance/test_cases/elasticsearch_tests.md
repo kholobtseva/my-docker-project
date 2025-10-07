@@ -11,18 +11,27 @@
 - Elasticsearch контейнер здоров
 
 **Test Steps:**
-1. Проверить статус Elasticsearch: `curl -X GET "http://localhost:9200/_cluster/health?pretty"`
-2. Проверить список индексов: `curl -X GET "http://localhost:9200/_cat/indices?v"`
-3. Проверить доступность Kibana: http://localhost:5601
-4. Убедиться что индекс `agriculture-data` существует
-
-**Expected Results:**
-- Elasticsearch возвращает status: "green" или "yellow"
-- Индекс `agriculture-data` присутствует в списке
-- Kibana доступен в браузере
-- Отсутствуют ошибки подключения
+1. Проверить статус Elasticsearch: 
+   ```powershell
+   Invoke-RestMethod -Uri "http://localhost:9200/_cluster/health?pretty" -Method Get
+   ```
+   ER: Elasticsearch возвращает status: "green" или "yellow"
+   
+2. Проверить список индексов: 
+   ```powershell
+   Invoke-RestMethod -Uri "http://localhost:9200/_cat/indices?v" -Method Get
+   ```
+   ER: Индекс agriculture-data присутствует в списке
+   
+3. Проверить доступность Kibana: http://localhost:5601  
+   **ER:** Kibana доступен и отображает индекс agriculture-data
 
 **Status:** ✅ Manual
+
+**Evidence:**
+- TC-ES-001_step1_elasticsearch_health.JPG
+- TC-ES-001_step2_elasticsearch_indices.JPG  
+- TC-ES-001_step3_kibana_interface.JPG
 
 ---
 ### TC-ES-002: PostgreSQL to Elasticsearch Data Synchronization
@@ -158,3 +167,4 @@
 **Status:** ✅ Manual
 
 ---
+
