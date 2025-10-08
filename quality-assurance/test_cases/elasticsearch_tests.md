@@ -84,17 +84,31 @@ docker-compose exec postgres psql -U user -d my_db -c "SELECT COUNT(*) FROM agri
 - Индекс agriculture-data заполнен
 
 **Test Steps:**
-1. Выполнить поиск по названию контракта: `curl -X GET "http://localhost:9200/agriculture-data/_search?pretty" -H 'Content-Type: application/json' -d'{"query":{"match":{"contract":"FEFZ25"}}}'`
-2. Проверить поиск по диапазону цен: `curl -X GET "http://localhost:9200/agriculture-data/_search?pretty" -H 'Content-Type: application/json' -d'{"query":{"range":{"price":{"gte":100,"lte":200}}}}'`
-3. Проверить агрегацию по контрактам: `curl -X GET "http://localhost:9200/agriculture-data/_search?pretty" -H 'Content-Type: application/json' -d'{"size":0,"aggs":{"contracts":{"terms":{"field":"contract.keyword","size":10}}}}'`
-4. Проверить полнотекстовый поиск по русским названиям: `curl -X GET "http://localhost:9200/agriculture-data/_search?pretty" -H 'Content-Type: application/json' -d'{"query":{"match":{"name_rus":"железная"}}}'`
+1. Выполнить поиск по названию контракта FEFZ25 через Kibana Discover  
+   Открыть Kibana:
+   ```bash
+   http://localhost:5601
+   ``` 
+   Перейти в Discover → добавить фильтр: *`contract: FEFZ25`*  
+   ER: Отображаются только документы с contract: *FEFZ25*
 
-**Expected Results:**
-- Поиск по контракту возвращает соответствующие документы
-- Range запросы корректно фильтруют по ценам
-- Агрегации возвращают правильные группировки
-- Русский текст корректно индексируется и находится
-- Запросы выполняются быстро (< 1 секунды)
+3. Выполнить поиск по диапазону цен 100-200 через Kibana Discover  
+   Добавить фильтр: *`price >= 100 AND price <= 200`*  
+   ER: Отображаются документы с price в диапазоне 100-200
+
+4. Проверить агрегацию по контрактам через Kibana Visualize  
+   Создать pie chart по полю *`contract.keyword`*  
+   ER: Pie chart показывает распределение по контрактам
+
+5. Проверить поиск по русскому тексту через Kibana Discover  
+   Добавить фильтр: *`name_rus: "железная"`*  
+   ER: Отображаются документы с name_rus содержащим "железная"
+
+**Evidence:**
+- TC-ES-003_step1_contract_search.JPG
+- TC-ES-003_step2_price_range_search.JPG  
+- TC-ES-003_step3_contracts_aggregation.JPG
+- TC-ES-003_step4_russian_text_search.JPG
 
 **Status:** ✅ Manual
 
@@ -183,5 +197,6 @@ docker-compose exec postgres psql -U user -d my_db -c "SELECT COUNT(*) FROM agri
 **Status:** ✅ Manual
 
 ---
+
 
 
