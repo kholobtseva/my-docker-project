@@ -15,6 +15,7 @@ from decimal import Decimal
 from core.logging_utils import setup_logging
 from core.kafka_utils import KafkaManager
 from core.elastic_utils import ElasticsearchManager
+from core.logging_utils import setup_graylog_logger
 
 # Константы и настройки
 health_status = 100  # ← ВЕРНУЛИ глобальную переменную
@@ -404,6 +405,7 @@ def main():
 if __name__ == "__main__":
     # Инициализация логирования и менеджеров
     logger = setup_logging('main_script')
+    graylog_logger = setup_graylog_logger('main_script')
     kafka_manager = KafkaManager()
     es_manager = ElasticsearchManager()
     

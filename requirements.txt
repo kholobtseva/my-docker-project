@@ -9,3 +9,4 @@ kafka-python==2.0.2
 allure-pytest==2.13.2
 allure-python-commons==2.13.2
 jsonschema==4.20.0
+pygelf==0.4.3

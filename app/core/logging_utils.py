@@ -3,6 +3,8 @@ import logging
 import json
 from datetime import datetime
 from elasticsearch import Elasticsearch
+from pygelf import GelfUdpHandler
+
 
 class ElasticsearchJSONFormatter(logging.Formatter):
     def __init__(self, logger_name):
@@ -58,4 +60,18 @@ def setup_logging(logger_name, es_hosts=['http://elasticsearch:9200']):
     ))
     logger.addHandler(console_handler)
     
+    return logger
+    
+def setup_graylog_logger(logger_name):
+    """Настройка логирования в Graylog"""
+    logger = logging.getLogger(logger_name)
+    
+    # Добавляем Graylog handler
+    graylog_handler = GelfUdpHandler(
+        host='graylog',      # имя контейнера
+        port=12201,          # порт из настроек Input
+        include_extra_fields=True
+    )
+    
+    logger.addHandler(graylog_handler)
     return logger

@@ -15,9 +15,11 @@ from jsonschema import validate
 # Импортируем наши модули
 from core.logging_utils import setup_logging
 from core.kafka_utils import create_kafka_consumer, KafkaManager
+from core.logging_utils import setup_graylog_logger
 
 # Настройка логирования
 logger = setup_logging('kafka_consumer')
+graylog_logger = setup_graylog_logger('kafka_consumer')
 
 # Data validation schema
 DATA_SCHEMA = {
