@@ -151,18 +151,16 @@ def get_data_json(url, contract_name):
         
         return data
         
-    except requests.exceptions.RequestException as er:  # ← ДОБАВИЛИ конкретные исключения
-        logger.error(f'Network error for {contract_name}: {er}')
+    except requests.exceptions.RequestException as er:
         health_status = 0
         return []
-    except ValueError as err:  # ← ДОБАВИЛИ конкретные исключения
+    except ValueError as err: 
         logger.error(f'Data parsing error for {contract_name}: {err}')  
         health_status = 0
         return []
     except Exception as e:
         logger.error(f'Unexpected error for {contract_name}: {str(e)}')
-        health_status = 0  # ← ОБНОВЛЯЕМ статус при ошибке
-        return []
+        health_status = 0 
 
 def insert_record_if_not_exists():
     """Вставка записей в www_data_idx если их нет"""
@@ -202,7 +200,7 @@ def insert_record_if_not_exists():
                 """, (
                     new_id, 
                     None,  # mask
-                    'Железная руда 62% Fe',  # ← ИСПРАВИЛИ НА РУССКОЕ!
+                    'Железная руда 62% Fe', 
                     name,  # name_eng
                     'ore_futures',  # source
                     'https://api.sgx.com/derivatives/v1.0/history/symbol/',  # url
@@ -282,7 +280,7 @@ def sync_to_elasticsearch():
             # Отправка в Elasticsearch
             es_result = es_manager.send_data(doc, 'agriculture-data')
             
-            # Отправка в Kafka (ОДИН РАЗ!)
+            # Отправка в Kafka 
             kafka_result = kafka_manager.send_message('market-data', doc)
             if kafka_result:
                 kafka_sent_count += 1
@@ -315,7 +313,7 @@ def main():
         to_log_file("\n\n\nSTART RUN SCRIPT\n", True)
         to_log_file(get_current_date(), True)  # ← ДОБАВИЛИ запись даты
         
-        interval = '1w'
+        interval = '8w'
         health_status = 100  # ← СБРАСЫВАЕМ статус при запуске
         
         # Вставляем записи если их нет
@@ -342,7 +340,7 @@ def main():
         logger.info("Database connection established")
         to_log_file("\nConnect to DB PostgreSQL: YES!!!\n", True)
         
-        # Получаем все контракты (как в старом скрипте)
+        # Получаем все контракты
         cursor.execute("SELECT id, name_eng, url FROM public.www_data_idx where source='ore_futures'")
         rows = cursor.fetchall()
         
@@ -351,9 +349,9 @@ def main():
         
         for row in rows:
             # ФИЛЬТРАЦИЯ как в старом скрипте
-            if row[1] in name_list:  # ← ВЕРНУЛИ фильтрацию!
+            if row[1] in name_list:  
                 url = f"{row[2]}{row[1]}?days={interval}&category=futures&params=base-date%2Cbase-date%2Ctotal-volume%2Cdaily-settlement-price-abs"
-                to_log_file(f"\n-----\n{url}\n", True)  # ← ВЕРНУЛИ формат лога
+                to_log_file(f"\n-----\n{url}\n", True)  
                 
                 data_points = get_data_json(url, row[1])
                 
