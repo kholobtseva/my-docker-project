@@ -97,10 +97,29 @@ logger: "main_script"
 
 - git clone https://github.com/kholobtseva/my-docker-project.git
 - cd my-docker-project
-- docker-compose up --build
 
-# Запуск полного стека
+
+### Автоматический запуск (Windows .bat файл)
+```batch
+@echo off
+cd C:\Users\kholo\Desktop\my_docker_project
+echo Запуск Docker Compose...
 docker-compose up --build -d
+echo Ожидание 45 секунд...
+timeout /t 45
+echo Запуск Python-скрипта...
+docker-compose exec python-script python app/main.py
+echo. 
+echo СКРИПТ ЗАВЕРШЕН - нажми любую клавишу для закрытия...
+pause
+```
+
+### Ручной запуск
+
+```bash
+docker-compose up --build -d  
+docker-compose exec python-script python app/main.py  
+```
 
 ### Доступ к интерфейсам:
 - Kibana (визуализация): http://localhost:5601

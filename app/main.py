@@ -254,20 +254,13 @@ def sync_to_elasticsearch():
         conn = psycopg2.connect(**DB_CONFIG)
         cursor = conn.cursor()
         
-        # ДОБАВИМ СОРТИРОВКУ
+        # ТОЛЬКО ОДИН ЗАПРОС (с сортировкой)
         cursor.execute("""
             SELECT am.id_value, am.date_val, am.avg_val, am.volume, am.currency,
                    wdi.name_eng, wdi.name_rus
             FROM agriculture_moex am
             JOIN www_data_idx wdi ON am.id_value = wdi.id
             ORDER BY am.date_val, wdi.name_eng
-        """)
-        
-        cursor.execute("""
-            SELECT am.id_value, am.date_val, am.avg_val, am.volume, am.currency,
-                   wdi.name_eng, wdi.name_rus
-            FROM agriculture_moex am
-            JOIN www_data_idx wdi ON am.id_value = wdi.id
         """)
         
         synced_count = 0
@@ -289,7 +282,7 @@ def sync_to_elasticsearch():
             # Отправка в Elasticsearch
             es_result = es_manager.send_data(doc, 'agriculture-data')
             
-            # Отправка в Kafka (как в старом скрипте)
+            # Отправка в Kafka (ОДИН РАЗ!)
             kafka_result = kafka_manager.send_message('market-data', doc)
             if kafka_result:
                 kafka_sent_count += 1
@@ -299,9 +292,7 @@ def sync_to_elasticsearch():
             
             synced_count += 1
         
-        # ВАЖНО: Делаем flush как в старом скрипте
         kafka_manager.flush()
-        
         logger.info(f"SUCCESS Synchronization completed! ES: {synced_count}, Kafka: {kafka_sent_count}")
         
         cursor.close()

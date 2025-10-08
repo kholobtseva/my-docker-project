@@ -15,6 +15,7 @@ services:
 
   python-script:
     build: .
+    restart: "no"
     depends_on:
       - postgres
     environment:

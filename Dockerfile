@@ -22,4 +22,5 @@ COPY . .
 RUN chmod +x app/main.py
 
 # Ждем запуска БД и запускаем скрипт
-CMD ["sh", "-c", "sleep 10 && python app/main.py"]
+# CMD ["sh", "-c", "sleep 30 && python app/main.py"]
+CMD ["sleep", "infinity"]
