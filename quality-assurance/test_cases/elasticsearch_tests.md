@@ -44,16 +44,32 @@
 - Функция sync_to_elasticsearch() работает
 
 **Test Steps:**
-1. Запустить синхронизацию: `docker-compose exec python-script python -c "from main import sync_to_elasticsearch; sync_to_elasticsearch()"`
-2. Проверить количество документов в Elasticsearch: `curl -X GET "http://localhost:9200/agriculture-data/_count?pretty"`
-3. Проверить что данные синхронизированы: `curl -X GET "http://localhost:9200/agriculture-data/_search?pretty" -H 'Content-Type: application/json' -d'{"query":{"match_all":{}}, "size": 2}'`
-4. Сравнить количество записей в PostgreSQL и Elasticsearch: `docker-compose exec postgres psql -U user -d my_db -c "SELECT COUNT(*) FROM agriculture_moex;"`
+1. Проверить данные в Kibana Discover
+powershell
+   Открыть Kibana: http://localhost:5601    
+   Перейти в Discover → выбрать индекс *agriculture-data*  
+   ER: Данные отображаются, все поля присутствуют
+2. Проверить детали документа
+   В Kibana Discover кликнуть на любой документ для просмотра деталей.
+   ER: Документ содержит все поля:
+   ```
+   id_value, date, price, contract, name_rus, source, sync_timestamp
+   ```
+4. Проверить количество документов
+   В Kibana сверху отображается total documents
+   ER: Количество документов > 0
+5. Сравниваем с PostgreSQL 
+```powershell
+docker-compose exec postgres psql -U user -d my_db -c "SELECT COUNT(*) FROM agriculture_moex;"
+```
+   ER: Количество записей в PostgreSQL ≈ количеству документов в Elasticsearch
 
-**Expected Results:**
-- Количество документов в Elasticsearch ≈ количеству записей в PostgreSQL
-- Документы в Elasticsearch содержат все необходимые поля
-- Данные корректно преобразованы (числа как numbers, даты как dates)
-- Отсутствуют ошибки синхронизации в логах
+**Evidence:**
+
+- TC-ES-002_step2_documents_count.JPG
+- TC-ES-002_step3_sample_data.JPG
+- TC-ES-002_step4_postgres_count.JPG
+- TC-ES-002_step5_sync_logs.JPG
 
 **Status:** ✅ Manual
 
@@ -167,4 +183,5 @@
 **Status:** ✅ Manual
 
 ---
+
 
