@@ -37,3 +37,19 @@
 | 4 | Поиск по русскому тексту через Kibana Discover | Отображаются документы с name_rus содержащим "железная" | ✅ Найдены документы с русским текстом | PASS | ![Russian Text Search](../screenshots/elasticsearch_tests/TC-ES-003_step4_russian_text_search.JPG) |
 
 **Статус:** ✅ Manual ✅ PASSED
+
+---
+
+### TC-ES-004: Elasticsearch Service Recovery
+
+| Шаг | Действие | Ожидаемый результат | Фактический результат | Статус | Доказательства |
+|-----|----------|---------------------|----------------------|--------|----------------|
+| 1 | Остановить Elasticsearch контейнер | Контейнер останавливается |  |  | ![Elasticsearch Stopped](../screenshots/elasticsearch_tests/TC-ES-004_step1_elasticsearch_stopped.JPG) |
+| 2 | Проверить ошибки подключения в Kibana | Kibana показывает ошибки подключения |  |  | ![Kibana Errors](../screenshots/elasticsearch_tests/TC-ES-004_step2_kibana_errors.JPG) |
+| 3 | Запустить Elasticsearch контейнер | Контейнер запускается |  |  | ![Elasticsearch Started](../screenshots/elasticsearch_tests/TC-ES-004_step3_elasticsearch_started.JPG) |
+| 4 | Проверить статус Elasticsearch после запуска | Status: "green" или "yellow" |  |  | ![Recovery Status](../screenshots/elasticsearch_tests/TC-ES-004_step4_recovery_status.JPG) |
+| 5 | Проверить восстановление Kibana | Kibana работает нормально |  |  | ![Kibana Recovery](../screenshots/elasticsearch_tests/TC-ES-004_step5_kibana_recovery.JPG) |
+| 6 | Проверить целостность данных после восстановления | Количество документов сохранилось |  |  | ![Data Integrity](../screenshots/elasticsearch_tests/TC-ES-004_step6_data_integrity.JPG) |
+
+**Статус:** ✅ Manual ✅ 
+
