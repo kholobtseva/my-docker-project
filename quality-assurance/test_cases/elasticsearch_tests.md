@@ -151,7 +151,7 @@ docker-compose exec postgres psql -U user -d my_db -c "SELECT COUNT(*) FROM agri
 **Status:** ✅ Manual
 
 ---
-### TC-ES-006: Elasticsearch Field Mapping Validation
+### TC-ES-005: Elasticsearch Field Mapping Validation
 **Priority:** Medium  
 **Type:** Data Integrity  
 **Description:** Проверка корректности маппинга полей в Elasticsearch индексе  
@@ -160,25 +160,31 @@ docker-compose exec postgres psql -U user -d my_db -c "SELECT COUNT(*) FROM agri
 - Данные синхронизированы из PostgreSQL
 
 **Test Steps:**
-1. Получить маппинг индекса: `curl -X GET "http://localhost:9200/agriculture-data/_mapping?pretty"`
-2. Проверить типы ключевых полей:
-   - `price` должен быть `float`
-   - `date` должен быть `date`
-   - `contract` должен быть `text` и `keyword`
-   - `name_rus` должен быть `text`
-3. Проверить что русский текст поддерживается: `curl -X GET "http://localhost:9200/agriculture-data/_search?pretty" -H 'Content-Type: application/json' -d'{"query":{"match":{"name_rus":"руда"}}}'`
-4. Проверить что числовые поля поддерживают агрегации
+1. Получить маппинг индекса: `Invoke-RestMethod -Uri "http://localhost:9200/agriculture-data/_mapping?pretty" -Method Get`  
+   ER: Возвращается структура маппинга полей
+2. Проверить типы ключевых полей в маппинге  
+   ER: 
+   - `price` имеет тип `float`
+   - `date` имеет тип `date` 
+   - `contract` имеет multi-field mapping (`text` и `keyword`)
+   - `name_rus` имеет тип `text`
+3. Проверить поддержку русского текста через Kibana Discover  
+   Открыть Kibana: http://localhost:5601    
+   Перейти в Discover → добавить фильтр: `name_rus: "руда"`    
+   ER: Отображаются документы с name_rus содержащим "руда"
+4. Проверить поддержку агрегаций для числовых полей: `$body = '{"size":0,"aggs":{"avg_price":{"avg":{"field":"price"}}}}'; Invoke-RestMethod -Uri "http://localhost:9200/agriculture-data/_search?pretty" -Method Post -Body $body -ContentType "application/json"`  
+   ER: Агрегация возвращает среднее значение price
 
-**Expected Results:**
-- Поле `price` имеет тип `float`
-- Поле `date` имеет тип `date` с корректным форматом
-- Поле `contract` имеет multi-field mapping (`text` и `keyword`)
-- Русский текст корректно индексируется и ищется
-- Числовые поля поддерживают range queries и агрегации
+**Evidence:**
+- TC-ES-005_step1_index_mapping.JPG
+- TC-ES-005_step2_field_types.JPG
+- TC-ES-005_step3_russian_support.JPG
+- TC-ES-005_step4_numeric_aggregations.JPG
 
 **Status:** ✅ Manual
 
 ---
+
 
 
 
