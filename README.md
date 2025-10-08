@@ -154,10 +154,10 @@ pause
 <img src="https://img.shields.io/badge/Kafka_Consumer-✓-orange" alt="Kafka Consumer">
 <img src="https://img.shields.io/badge/Zookeeper-✓-orange" alt="Zookeeper">
 
-**API:**  
+## API:  
 <img src="https://img.shields.io/badge/Singapore_Exchange-✓-orange" alt="Singapore Exchange">
 
-**Инструменты:**  
+## Инструменты: 
 <img src="https://img.shields.io/badge/Git-✓-lightgrey?logo=git" alt="Git"> 
 <img src="https://img.shields.io/badge/GitHub-✓-lightgrey?logo=github" alt="GitHub">
 
@@ -181,7 +181,7 @@ docker run -d kholobtseva/my-python-script:latest
 Проект использует **полный цикл CI/CD** на GitHub Actions:
 
 ### ✅ Непрерывная интеграция Continuous Integration (CI)
-- **29 тестов** на pytest:
+- **34 теста** на pytest:
   - Unit-тесты компонентов
   - Тест-документация процессов и workflow
   - Проверка зависимостей и структуры проекта  
@@ -317,6 +317,7 @@ allure serve allure-results
 
 Проект задуман как учебный стенд: сначала реализован базовый пайплайн (сбор → обработка → хранение → визуализация).  
 Дальнейшее развитие — постепенное расширение QA-практиками
+
 
 
 
