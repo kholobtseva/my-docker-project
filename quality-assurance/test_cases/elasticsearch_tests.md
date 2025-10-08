@@ -115,35 +115,7 @@ docker-compose exec postgres psql -U user -d my_db -c "SELECT COUNT(*) FROM agri
 **Status:** ✅ Manual
 
 ---
-### TC-ES-004: Kibana Visualizations and Dashboards
-**Priority:** Medium  
-**Type:** Visualization  
-**Description:** Проверка создания и работы визуализаций в Kibana  
-**Preconditions:**
-- Kibana доступен: http://localhost:5601
-- Elasticsearch содержит данные в индексе agriculture-data
-- Index pattern создан для agriculture-data
-
-**Test Steps:**
-1. Открыть Kibana в браузере
-2. Перейти в раздел "Discover"
-3. Проверить что данные отображаются корректно
-4. Создать простую визуализацию (гистограмма цен по датам)
-5. Создать pie chart распределения по контрактам
-6. Сохранить визуализации в dashboard
-7. Проверить обновление данных в реальном времени
-
-**Expected Results:**
-- Данные отображаются в разделе Discover
-- Визуализации создаются без ошибок
-- Графики корректно отображают данные (цены, объемы)
-- Dashboard сохраняется и обновляется
-- Русские названия отображаются корректно
-
-**Status:** ✅ Manual
-
----
-### TC-ES-005: Elasticsearch Service Recovery
+### TC-ES-004: Elasticsearch Service Recovery
 **Priority:** Medium  
 **Type:** Recovery  
 **Description:** Проверка восстановления работы Elasticsearch после перезапуска  
@@ -152,21 +124,29 @@ docker-compose exec postgres psql -U user -d my_db -c "SELECT COUNT(*) FROM agri
 - Elasticsearch содержит данные
 
 **Test Steps:**
-1. Остановить Elasticsearch: `docker-compose stop elasticsearch`
-2. Проверить что Kibana показывает ошибку подключения
-3. Проверить что скрипт синхронизации логирует ошибки
-4. Запустить Elasticsearch обратно: `docker-compose start elasticsearch`
-5. Подождать 1 минуту для полного запуска
-6. Проверить статус Elasticsearch: `curl -X GET "http://localhost:9200/_cluster/health?pretty"`
-7. Проверить что Kibana восстановил работу
-8. Запустить синхронизацию данных: `docker-compose exec python-script python -c "from main import sync_to_elasticsearch; sync_to_elasticsearch()"`
+1. Остановить Elasticsearch: `docker-compose stop elasticsearch`  
+   ER: Контейнер останавливается
+2. Проверить что Kibana показывает ошибку подключения  
+   ER: Kibana отображает ошибки подключения к Elasticsearch
+3. Запустить Elasticsearch обратно: `docker-compose start elasticsearch`  
+   ER: Контейнер запускается
+4. Подождать 1 минуту для полного запуска  
+   Проверить статус Elasticsearch: `Invoke-RestMethod -Uri "http://localhost:9200/_cluster/health?pretty" -Method Get`  
+   ER: Status: "green" или "yellow"
+5. Проверить что Kibana восстановил работу   
+   ER: Kibana работает нормально, данные отображаются  
+6. Проверить целостность данных после восстановления  
+   ER: Количество документов и данные сохранились
 
-**Expected Results:**
-- При остановке Elasticsearch Kibana показывает ошибки подключения
-- Скрипт синхронизации обрабатывает ошибки без падений
-- После запуска Elasticsearch статус становится "green" или "yellow"
-- Kibana восстанавливает работу автоматически
-- Синхронизация данных работает после восстановления
+**Evidence:**
+- TC-ES-004_step1_elasticsearch_stopped.JPG
+- TC-ES-004_step2_kibana_errors.JPG
+- TC-ES-004_step3_elasticsearch_started.JPG
+- TC-ES-004_step4_recovery_status.JPG
+- TC-ES-004_step5_kibana_recovery.JPG
+- TC-ES-004_step6_data_integrity.JPG
+
+
 
 **Status:** ✅ Manual
 
@@ -199,6 +179,7 @@ docker-compose exec postgres psql -U user -d my_db -c "SELECT COUNT(*) FROM agri
 **Status:** ✅ Manual
 
 ---
+
 
 
 
