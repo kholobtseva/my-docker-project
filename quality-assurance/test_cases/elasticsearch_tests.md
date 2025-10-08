@@ -92,22 +92,24 @@ docker-compose exec postgres psql -U user -d my_db -c "SELECT COUNT(*) FROM agri
    Перейти в Discover → добавить фильтр: *`contract: FEFZ25`*  
    ER: Отображаются только документы с contract: *FEFZ25*
 
-3. Выполнить поиск по диапазону цен 100-200 через Kibana Discover  
+2. Выполнить поиск по диапазону цен 100-200 через Kibana Discover  
    Добавить фильтр: *`price >= 100 AND price <= 200`*  
    ER: Отображаются документы с price в диапазоне 100-200
 
-4. Проверить агрегацию по контрактам через Kibana Visualize  
-   Создать pie chart по полю *`contract.keyword`*  
-   ER: Pie chart показывает распределение по контрактам
+3. Показать изменение объема торгов по дням через Kibana Visualize  
+   Создать Area chart:  
+   - Horizontal axis: `date` (Date Histogram)  
+   - Vertical axis: `Average of volume`  
+   ER: Area chart показывает динамику объема торгов во времени
 
-5. Проверить поиск по русскому тексту через Kibana Discover  
+4. Проверить поиск по русскому тексту через Kibana Discover  
    Добавить фильтр: *`name_rus: "железная"`*  
    ER: Отображаются документы с name_rus содержащим "железная"
 
 **Evidence:**
 - TC-ES-003_step1_contract_search.JPG
-- TC-ES-003_step2_price_range_search.JPG  
-- TC-ES-003_step3_contracts_aggregation.JPG
+- TC-ES-003_step2_price_range_search.JPG 
+- TC-ES-003_step3_volume_trend.JPG
 - TC-ES-003_step4_russian_text_search.JPG
 
 **Status:** ✅ Manual
@@ -197,6 +199,7 @@ docker-compose exec postgres psql -U user -d my_db -c "SELECT COUNT(*) FROM agri
 **Status:** ✅ Manual
 
 ---
+
 
 
 
