@@ -110,18 +110,14 @@ echo Запуск Docker Compose...
 docker-compose up --build -d
 echo Ожидание 45 секунд...
 timeout /t 45
+echo Настройка Graylog...
+docker-compose exec python-script python app/setup_graylog.py
+timeout /t 20
 echo Запуск Python-скрипта...
 docker-compose exec python-script python app/main.py
 echo. 
 echo СКРИПТ ЗАВЕРШЕН - нажми любую клавишу для закрытия...
 pause
-```
-
-### Ручной запуск
-
-```bash
-docker-compose up --build -d  
-docker-compose exec python-script python app/main.py  
 ```
 
 ### Доступ к интерфейсам:
@@ -240,7 +236,7 @@ docker run -d kholobtseva/my-python-script:latest
 ### Установить зависимости
 pip install -r requirements.txt
 
-### Запустить все тесты (29 тестов - код + документация)
+### Запустить все тесты (34 теста - код + документация)
 pytest tests/ -v
 
 ### Запустить конкретные тесты
@@ -262,7 +258,7 @@ allure serve allure-results
 
 **Реальные результаты**
 
-**📊 [Markdown Report с реальными результатами тестирования](quality-assurance/test_results/kafka_pipeline_suite_report.md)**
+**📊 [Markdown Report с реальными результатами тестирования Kafka](quality-assurance/test_results/kafka_pipeline_suite_report.md)**
 
 **📊 [Markdown Report с реальными результатами тестирования Elasticsearch](quality-assurance/test_results/elasticsearch_pipeline_suite_report.md)**
 
@@ -321,6 +317,7 @@ allure serve allure-results
 
 Проект задуман как учебный стенд: сначала реализован базовый пайплайн (сбор → обработка → хранение → визуализация).  
 Дальнейшее развитие — постепенное расширение QA-практиками
+
 
 
 
