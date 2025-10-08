@@ -53,3 +53,16 @@
 
 **Статус:** ✅ Manual ✅ 
 
+---
+
+### TC-ES-005: Elasticsearch Field Mapping Validation
+
+| Шаг | Действие | Ожидаемый результат | Фактический результат | Статус | Доказательства |
+|-----|----------|---------------------|----------------------|--------|----------------|
+| 1 | Получить маппинг индекса agriculture-data | Возвращается структура маппинга полей |  |  | ![Index Mapping](../screenshots/elasticsearch_tests/TC-ES-005_step1_index_mapping.JPG) |
+| 2 | Проверить типы ключевых полей | price: float, date: date, contract: text+keyword, name_rus: text |  |  | ![Field Types](../screenshots/elasticsearch_tests/TC-ES-005_step2_field_types.JPG) |
+| 3 | Проверить поддержку русского текста | Находятся документы с русским текстом "руда" |  |  | ![Russian Support](../screenshots/elasticsearch_tests/TC-ES-005_step3_russian_support.JPG) |
+| 4 | Проверить поддержку агрегаций для числовых полей | Агрегация возвращает среднее значение price |  |  | ![Numeric Aggregations](../screenshots/elasticsearch_tests/TC-ES-005_step4_numeric_aggregations.JPG) |
+
+**Статус:** ✅ Manual ✅ 
+
