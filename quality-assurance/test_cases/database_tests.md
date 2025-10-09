@@ -1,8 +1,6 @@
-# Test Cases: Database Operations
+# Test Cases: Операции с базой данных
 
-## PostgreSQL Integration Tests
-
-### TC-DB-001: Database Connection and Basic Operations
+### TC-DB-001: Подключение к базе данных и базовые операции
 **Priority:** High  
 **Type:** Database Smoke  
 **Description:** Проверка подключения к PostgreSQL и базовых операций  
@@ -41,7 +39,7 @@
 Status: ✅ Manual
   
 ---
-### TC-DB-002: Data Integrity and Constraints Validation
+### TC-DB-002: Проверка целостности данных и ограничений
 **Priority:** High  
 **Type:** Database Integrity  
 **Description:** Проверка целостности данных и работы constraints в PostgreSQL  
@@ -81,7 +79,7 @@ Status: ✅ Manual
 
 ---
 
-### TC-DB-003: ON CONFLICT Mechanism Validation
+### TC-DB-003: Проверка механизма ON CONFLICT
 **Priority:** High  
 **Type:** Database Integrity  
 **Description:** Проверка работы механизма ON CONFLICT при вставке дублирующихся данных  
@@ -119,7 +117,7 @@ Status: ✅ Manual
 
 ---
 
-### TC-DB-004: Data Update Operations Validation
+### TC-DB-004: Проверка операций обновления данных
 **Priority:** High  
 **Type:** Database Operations  
 **Description:** Проверка корректности операций обновления данных в таблицах  
@@ -178,10 +176,6 @@ Status: ✅ Manual
 
 **Status:** ✅ Manual
    
-
-
-   
-
 ---
 ### TC-DB-005: Query Performance and Data Retrieval
 **Priority:** Medium  
@@ -274,6 +268,7 @@ Status: ✅ Manual
 **Status:** ✅ Manual
 
 ---
+
 
 
 
