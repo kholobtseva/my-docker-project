@@ -46,6 +46,7 @@ Status: ✅ Manual
 **Type:** Database Integrity  
 **Description:** Проверка целостности данных и работы constraints в PostgreSQL  
 **Preconditions:**
+
 - База данных содержит тестовые данные
 - Все таблицы созданы
 
@@ -77,7 +78,6 @@ Status: ✅ Manual
 - TC-DB-002_step3_null_check.JPG
 
 **Status:** ✅ Manual
-
 ---
 
 ### TC-DB-003: ON CONFLICT Mechanism Validation
@@ -218,4 +218,5 @@ Status: ✅ Manual
 **Status:** ✅ Manual
 
 ---
+
 
