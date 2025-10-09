@@ -36,3 +36,15 @@
 | 3 | Проверить обновление записи | avg_val=150, date_upd обновился | ✅ avg_val=150, date_upd=2025-10-09 16:36:22 | PASS | ![Verify Update](../screenshots/database_tests/TC-DB-003_step3_verify_update.JPG) |
 
 **Статус:** ✅ Manual ✅ PASSED
+
+### TC-DB-004: Data Update Operations Validation
+
+| Шаг | Действие | Ожидаемый результат | Фактический результат | Статус | Доказательства |
+|-----|----------|---------------------|----------------------|--------|----------------|
+| 1 | Проверить текущее значение health_status | health_status = 100 | ✅ health_status = 100 | PASS | ![Current Health](../screenshots/database_tests/TC-DB-004_step1_current_health.JPG) |
+| 2 | Выполнить обновление health_status | UPDATE выполняется без ошибок | ✅ UPDATE 1 - успешно | PASS | ![Update Health](../screenshots/database_tests/TC-DB-004_step2_update_health.JPG) |
+| 3 | Проверить обновление health_status | health_status = 0 | ✅ health_status = 0 | PASS | ![Verify Health](../screenshots/database_tests/TC-DB-004_step3_verify_health.JPG) |
+| 4 | Обновить запись в agriculture_moex | Цена успешно обновляется | ✅ Цена обновлена на 999 | PASS | ![Update Agriculture](../screenshots/database_tests/TC-DB-004_step4_update_agriculture.JPG) |
+| 5 | Восстановить исходные значения | Исходные значения восстановлены | ✅ health_status=100, цена восстановлена | PASS | ![Restore Values](../screenshots/database_tests/TC-DB-004_step5_restore_values.JPG) |
+
+**Статус:** ✅ Manual ✅ PASSED
