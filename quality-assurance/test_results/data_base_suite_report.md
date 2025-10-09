@@ -13,7 +13,7 @@
 
 **Статус:** ✅ Manual ✅ PASSED
 
----
+
 
 ### TC-DB-002: Data Integrity and Constraints Validation
 
@@ -26,3 +26,4 @@
 **Статус:** ✅ Manual ✅ PASSED
 
 ---
+
