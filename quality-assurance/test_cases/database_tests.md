@@ -78,6 +78,7 @@ Status: ✅ Manual
 - TC-DB-002_step3_null_check.JPG
 
 **Status:** ✅ Manual
+
 ---
 
 ### TC-DB-003: ON CONFLICT Mechanism Validation
@@ -85,22 +86,37 @@ Status: ✅ Manual
 **Type:** Database Integrity  
 **Description:** Проверка работы механизма ON CONFLICT при вставке дублирующихся данных  
 **Preconditions:**
+
 - В таблице agriculture_moex есть существующие записи
 - PostgreSQL доступен
 
 **Test Steps:**
-1. Выбрать существующую запись для теста: `docker-compose exec postgres psql -U user -d my_db -c "SELECT id_value, date_val, avg_val FROM agriculture_moex LIMIT 1;"`
-2. Запомнить текущее значение avg_val и date_upd
-3. Попытаться вставить дубликат с новым значением avg_val: `docker-compose exec postgres psql -U user -d my_db -c "INSERT INTO agriculture_moex (id_value, date_val, min_val, max_val, avg_val, volume, currency) VALUES ([id_value], '[date_val]', 100, 200, 150, 1000, 'USD') ON CONFLICT (id_value, date_val) DO UPDATE SET min_val = EXCLUDED.min_val, max_val = EXCLUDED.max_val, avg_val = EXCLUDED.avg_val, volume = EXCLUDED.volume, currency = EXCLUDED.currency, date_upd = now();"`
-4. Проверить что запись обновилась: `docker-compose exec postgres psql -U user -d my_db -c "SELECT avg_val, date_upd FROM agriculture_moex WHERE id_value = [id_value] AND date_val = '[date_val]';"`
+1. Выбрать существующую запись для теста:  
+   ```powershell
+   docker-compose exec postgres psql -U user -d my_db -c "SELECT id_value, date_val, avg_val FROM agriculture_moex LIMIT 1;"
+   ```
+   ER: Возвращает существующую запись
 
-**Expected Results:**
-- При вставке дубликата не возникает ошибки UNIQUE violation
-- Значение avg_val изменилось на новое (150)
-- Поле date_upd обновилось на текущее время
-- Количество записей в таблице не изменилось
+2. Запомнить id_value и date_val из шага 1, затем вставить дубликат:
+   ```powershell
+   docker-compose exec postgres psql -U user -d my_db -c "INSERT INTO agriculture_moex (id_value, date_val, min_val, max_val, avg_val, volume, currency) VALUES (id_value_real, 'date_val_real', 100, 200, 150, 1000, 'USD') ON CONFLICT (id_value, date_val) DO UPDATE SET min_val = EXCLUDED.min_val, max_val = EXCLUDED.max_val, avg_val = EXCLUDED.avg_val, volume = EXCLUDED.volume, currency = EXCLUDED.currency, date_upd = now();"
+   ```
+   ER: При вставке дубликата не возникает ошибки UNIQUE violation
+
+3. Проверить что запись обновилась:
+   ```powershell
+   docker-compose exec postgres psql -U user -d my_db -c "SELECT avg_val, date_upd FROM agriculture_moex WHERE id_value = id_value_real AND date_val = 'date_val_real';"
+   ```
+   ER: Значение avg_val изменилось на 150, поле date_upd обновилось
+
+**Evidence:**
+
+- TC-DB-003_step1_select_record.JPG
+- TC-DB-003_step2_insert_conflict.JPG
+- TC-DB-003_step3_verify_update.JPG
 
 **Status:** ✅ Manual
+
 
 ---
 ### TC-DB-004: Data Update Operations Validation
@@ -218,5 +234,6 @@ Status: ✅ Manual
 **Status:** ✅ Manual
 
 ---
+
 
 
