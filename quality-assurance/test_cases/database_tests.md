@@ -117,30 +117,70 @@ Status: ✅ Manual
 
 **Status:** ✅ Manual
 
-
 ---
+
 ### TC-DB-004: Data Update Operations Validation
 **Priority:** High  
 **Type:** Database Operations  
 **Description:** Проверка корректности операций обновления данных в таблицах  
 **Preconditions:**
+
 - В таблицах есть тестовые данные
 - health_monitor содержит запись с id = 1012
 
 **Test Steps:**
-1. Проверить текущее значение health_status: `docker-compose exec postgres psql -U user -d my_db -c "SELECT health_status, date_upd FROM health_monitor WHERE id = 1012;"`
-2. Выполнить обновление health_status: `docker-compose exec postgres psql -U user -d my_db -c "UPDATE health_monitor SET health_status = 50, date_upd = NOW() WHERE id = 1012;"`
-3. Проверить что значение обновилось: `docker-compose exec postgres psql -U user -d my_db -c "SELECT health_status FROM health_monitor WHERE id = 1012;"`
-4. Проверить обновление agriculture_moex: выбрать запись и обновить её цену
-5. Восстановить исходные значения для повторного тестирования
+1. Проверить текущее значение health_status:
+   ```powershell
+   docker-compose exec postgres psql -U user -d my_db -c "SELECT health_status, date_upd FROM health_monitor WHERE id = 1012;"
+   ```
+   ER: health_status = 100
 
-**Expected Results:**
-- health_status успешно изменяется с 100 на 50
-- Поле date_upd обновляется при изменении записи
-- Операции UPDATE выполняются без ошибок
-- Данные сохраняются после обновления
+2. Выполнить обновление health_status:
+   ```powershell
+     docker-compose exec postgres psql -U user -d my_db -c "UPDATE health_monitor SET health_status = 0, date_upd = NOW() WHERE id = 1012;"
+   ```
+   ER: Операция UPDATE выполняется без ошибок
+
+3. Проверить что значение обновилось:
+   ```powershell
+   docker-compose exec postgres psql -U user -d my_db -c "SELECT health_status FROM health_monitor WHERE id = 1012;"
+   ```
+   ER: health_status = 0
+
+4. Проверить обновление agriculture_moex:
+   ```powershell
+   docker-compose exec postgres psql -U user -d my_db -c "SELECT id_value, date_val, avg_val FROM agriculture_moex LIMIT 1;"  
+   ```
+   Обновить цену (заменить id_value_real и date_val_real)    
+   ```powershell
+   docker-compose exec postgres psql -U user -d my_db -c "UPDATE agriculture_moex SET avg_val = 999, date_upd = NOW() WHERE id_value = id_value_real AND date_val = 'date_val_real';"
+   ```
+   ER: Цена успешно обновляется
+   
+5. Восстановить исходные значения:  
+   Восстановить health_monitor
+   ```powershell
+   docker-compose exec postgres psql -U user -d my_db -c "UPDATE health_monitor SET health_status = 100, date_upd = NOW() WHERE id = 1012;"
+   ```
+   Восстановить agriculture_moex (заменить id_value_real и date_val_real)
+   ```powershell
+   docker-compose exec postgres psql -U user -d my_db -c "UPDATE agriculture_moex SET avg_val = исходное_значение, date_upd = NOW() WHERE id_value = id_value_real AND date_val = 'date_val_real';"
+   ```
+   ER: Исходные значения восстановлены
+
+   **Evidence:**
+
+- TC-DB-004_step1_current_health.JPG
+- TC-DB-004_step2_update_health.JPG
+- TC-DB-004_step3_verify_health.JPG
+- TC-DB-004_step4_update_agriculture.JPG
+- TC-DB-004_step5_restore_values.JPG
 
 **Status:** ✅ Manual
+   
+
+
+   
 
 ---
 ### TC-DB-005: Query Performance and Data Retrieval
@@ -234,6 +274,7 @@ Status: ✅ Manual
 **Status:** ✅ Manual
 
 ---
+
 
 
 
