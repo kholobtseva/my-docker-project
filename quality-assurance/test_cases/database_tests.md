@@ -11,18 +11,35 @@
 - PostgreSQL контейнер здоров
 
 **Test Steps:**
-1. Проверить доступность PostgreSQL: `docker-compose exec postgres pg_isready`
-2. Проверить список таблиц: `docker-compose exec postgres psql -U user -d my_db -c "\dt"`
-3. Проверить существование основных таблиц: `www_data_idx`, `agriculture_moex`, `health_monitor`
-4. Проверить количество записей в таблицах: `docker-compose exec postgres psql -U user -d my_db -c "SELECT COUNT(*) FROM www_data_idx;"`
+1. Проверить доступность PostgreSQL:
+   ```powershell
+   docker-compose exec postgres pg_isready
+  ER: PostgreSQL доступен (возвращает "accepting connections")  
+2. Проверить список таблиц:
+  ```powershell
+  docker-compose exec postgres psql -U user -d my_db -c "\dt"
+  ```
+  ER: Отображается список таблиц в базе данных  
+3. Проверить существование основных таблиц:
+  ```powershell
+  docker-compose exec postgres psql -U user -d my_db -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('www_data_idx', 'agriculture_moex', 'health_monitor');"
+  ```
+  ER: Все основные таблицы существуют (www_data_idx, agriculture_moex, health_monitor)  
+4. Проверить количество записей в таблицах:
+  ```powershell
+  docker-compose exec postgres psql -U user -d my_db -c "SELECT COUNT(*) FROM www_data_idx;"
+  ```
+  ER: Таблица www_data_idx содержит записи (COUNT > 0)
 
-**Expected Results:**
-- PostgreSQL доступен (pg_isready возвращает "accepting connections")
-- Все основные таблицы существуют
-- Таблица `www_data_idx` содержит записи (COUNT > 0)
+**Evidence:**
 
-**Status:** ✅ Manual
+- TC-DB-001_step1_postgres_availability.JPG
+- TC-DB-001_step2_table_list.JPG  
+- TC-DB-001_step3_main_tables.JPG
+- TC-DB-001_step4_record_count.JPG
 
+Status: ✅ Manual
+  
 ---
 ### TC-DB-002: Data Integrity and Constraints Validation
 **Priority:** High  
@@ -33,15 +50,31 @@
 - Все таблицы созданы
 
 **Test Steps:**
-1. Проверить UNIQUE constraint в agriculture_moex: `docker-compose exec postgres psql -U user -d my_db -c "SELECT id_value, date_val, COUNT(*) FROM agriculture_moex GROUP BY id_value, date_val HAVING COUNT(*) > 1;"`
-2. Проверить PRIMARY KEY в www_data_idx: `docker-compose exec postgres psql -U user -d my_db -c "SELECT id, COUNT(*) FROM www_data_idx GROUP BY id HAVING COUNT(*) > 1;"`
-3. Проверить foreign key отношения между таблицами
-4. Проверить что все обязательные поля заполнены: `docker-compose exec postgres psql -U user -d my_db -c "SELECT COUNT(*) FROM agriculture_moex WHERE id_value IS NULL OR date_val IS NULL;"`
+1. Проверить UNIQUE constraint в agriculture_moex:
+     
+   ```powershell
+   docker-compose exec postgres psql -U user -d my_db -c "SELECT id_value, date_val, COUNT(*) FROM agriculture_moex GROUP BY id_value, date_val HAVING COUNT(*) > 1;"
+   ```
+  ER: Нет дубликатов по UNIQUE constraint (id_value, date_val)  
 
-**Expected Results:**
-- Нет дубликатов по UNIQUE constraint (id_value, date_val)
-- Нет дубликатов PRIMARY KEY в www_data_idx
-- Все обязательные поля содержат значения (COUNT = 0 для NULL проверок)
+2. Проверить PRIMARY KEY в www_data_idx:  
+   ```powershell
+    docker-compose exec postgres psql -U user -d my_db -c "SELECT id, COUNT(*) FROM www_data_idx GROUP BY id HAVING COUNT(*) > 1;"
+   ```
+  ER: Нет дубликатов PRIMARY KEY в www_data_idx  
+  
+3. Проверить что все обязательные поля заполнены:  
+       
+  ```powershell
+    docker-compose exec postgres psql -U user -d my_db -c "SELECT COUNT(*) FROM agriculture_moex WHERE id_value IS NULL OR date_val IS NULL;"
+  ```  
+  ER: Все обязательные поля содержат значения (COUNT = 0 для NULL проверок)    
+
+**Evidence:**
+
+- TC-DB-002_step1_unique_constraint.JPG
+- TC-DB-002_step2_primary_key.JPG
+- TC-DB-002_step3_null_check.JPG
 
 **Status:** ✅ Manual
 
@@ -185,3 +218,4 @@
 **Status:** ✅ Manual
 
 ---
+
