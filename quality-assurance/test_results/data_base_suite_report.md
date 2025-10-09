@@ -27,3 +27,12 @@
 
 ---
 
+### TC-DB-003: ON CONFLICT Mechanism Validation
+
+| Шаг | Действие | Ожидаемый результат | Фактический результат | Статус | Доказательства |
+|-----|----------|---------------------|----------------------|--------|----------------|
+| 1 | Выбрать существующую запись | Возвращает существующую запись | ✅ Запись найдена: id_value=198, date_val=2025-07-23 | PASS | ![Select Record](../screenshots/database_tests/TC-DB-003_step1_select_record.JPG) |
+| 2 | Вставить дубликат с ON CONFLICT | Не возникает ошибки UNIQUE violation | ✅ INSERT 0 1 - запись обновилась | PASS | ![Insert Conflict](../screenshots/database_tests/TC-DB-003_step2_insert_conflict.JPG) |
+| 3 | Проверить обновление записи | avg_val=150, date_upd обновился | ✅ avg_val=150, date_upd=2025-10-09 16:36:22 | PASS | ![Verify Update](../screenshots/database_tests/TC-DB-003_step3_verify_update.JPG) |
+
+**Статус:** ✅ Manual ✅ PASSED
