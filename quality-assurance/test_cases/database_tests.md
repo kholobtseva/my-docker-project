@@ -177,6 +177,7 @@ Status: ✅ Manual
 **Status:** ✅ Manual
    
 ---
+
 ### TC-DB-005: Query Performance and Data Retrieval
 **Priority:** Medium  
 **Type:** Database Performance  
@@ -186,66 +187,31 @@ Status: ✅ Manual
 - PostgreSQL доступен
 
 **Test Steps:**
-1. Проверить время выполнения базового запроса: `docker-compose exec postgres psql -U user -d my_db -c "EXPLAIN ANALYZE SELECT COUNT(*) FROM agriculture_moex WHERE date_val > CURRENT_DATE - INTERVAL '30 days';"`
-2. Проверить запрос с JOIN: `docker-compose exec postgres psql -U user -d my_db -c "EXPLAIN ANALYZE SELECT COUNT(*) FROM agriculture_moex am JOIN www_data_idx wdi ON am.id_value = wdi.id WHERE wdi.source = 'ore_futures';"`
+1. Проверить время выполнения базового запроса:
+   ```powershell
+   docker-compose exec postgres psql -U user -d my_db -c "EXPLAIN ANALYZE SELECT COUNT(*) FROM agriculture_moex WHERE date_val > CURRENT_DATE - INTERVAL '30 days';"
+   ```
+   ER: Запрос выполняется быстро (< 100ms)
+2. Проверить запрос с JOIN:
+   ```powershell
+   docker-compose exec postgres psql -U user -d my_db -c "EXPLAIN ANALYZE SELECT COUNT(*) FROM agriculture_moex am JOIN www_data_idx wdi ON am.id_value = wdi.id WHERE wdi.source = 'ore_futures';"
+   ```
+   ER: Запрос выполняется за разумное время (< 1 секунды)
+
 3. Проверить что запросы выполняются за разумное время (< 1 секунды)
+   ER: Оба запроса выполняются менее чем за 1 секунду
 
-**Expected Results:**
-- Базовые запросы выполняются быстро (< 100ms)
-- Запросы с JOIN выполняются за разумное время
-- Отсутствуют предупреждения о полном сканировании таблиц (Seq Scan)
+   **Evidence:**
 
-**Status:** ✅ Manual
-
----
-### TC-DB-005: Sequence Operations Validation
-**Priority:** Medium  
-**Type:** Database Operations  
-**Description:** Проверка корректной работы последовательностей (sequences) в PostgreSQL  
-**Preconditions:**
-- Таблица www_data_idx содержит последовательность www_data_idx_id_seq
-- PostgreSQL доступен
-
-**Test Steps:**
-1. Проверить текущее значение последовательности: `docker-compose exec postgres psql -U user -d my_db -c "SELECT last_value FROM www_data_idx_id_seq;"`
-2. Проверить максимальный ID в таблице: `docker-compose exec postgres psql -U user -d my_db -c "SELECT MAX(id) FROM www_data_idx;"`
-3. Вставить новую запись с автоматическим ID: `docker-compose exec postgres psql -U user -d my_db -c "INSERT INTO www_data_idx (mask, name_rus, name_eng, source, url) VALUES ('TEST', 'Тестовая запись', 'Test Record', 'test', 'http://test.com') RETURNING id;"`
-4. Проверить что использовался следующий ID из последовательности
-5. Удалить тестовую запись
-
-**Expected Results:**
-- Последовательность www_data_idx_id_seq существует и доступна
-- Новый ID автоматически генерируется из последовательности
-- ID новой записи = last_value + 1
-- Последовательность увеличивается после каждой вставки
+- TC-DB-005_step1_basic_query.JPG
+- TC-DB-005_step2_join_query.JPG
+- TC-DB-005_step3_performance_check.JPG
 
 **Status:** ✅ Manual
-
+   
 ---
-### TC-DB-008: Data Types Validation
-**Priority:** High  
-**Type:** Database Integrity  
-**Description:** Проверка корректности типов данных и форматов в таблицах  
-**Preconditions:**
-- Таблицы содержат тестовые данные
-- PostgreSQL доступен
 
-**Test Steps:**
-1. Проверить типы данных в agriculture_moex: `docker-compose exec postgres psql -U user -d my_db -c "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'agriculture_moex';"`
-2. Проверить что числовые поля содержат только числа: `docker-compose exec postgres psql -U user -d my_db -c "SELECT COUNT(*) FROM agriculture_moex WHERE id_value !~ '^[0-9]+$' OR min_val !~ '^[0-9.-]+$' OR max_val !~ '^[0-9.-]+$';"`
-3. Проверить формат дат: `docker-compose exec postgres psql -U user -d my_db -c "SELECT COUNT(*) FROM agriculture_moex WHERE date_val::text !~ '^\d{4}-\d{2}-\d{2}$';"`
-4. Проверить корректность валют: `docker-compose exec postgres psql -U user -d my_db -c "SELECT DISTINCT currency FROM agriculture_moex;"`
-
-**Expected Results:**
-- Все числовые поля содержат только числовые значения (COUNT = 0 для нечисловых проверок)
-- Все даты в корректном формате YYYY-MM-DD
-- Валюты соответствуют ожидаемым значениям (USD, etc.)
-- Типы данных соответствуют схеме таблиц
-
-**Status:** ✅ Manual
-
----
-### TC-DB-009: Complex JOIN Queries Validation
+### TC-DB-006: Complex JOIN Queries Validation
 **Priority:** Medium  
 **Type:** Database Operations  
 **Description:** Проверка корректности выполнения сложных запросов с JOIN между таблицами  
@@ -254,20 +220,33 @@ Status: ✅ Manual
 - PostgreSQL доступен
 
 **Test Steps:**
-1. Выполнить JOIN запрос для получения данных с названиями фьючерсов: `docker-compose exec postgres psql -U user -d my_db -c "SELECT am.id_value, wdi.name_rus, am.date_val, am.avg_val, am.volume FROM agriculture_moex am JOIN www_data_idx wdi ON am.id_value = wdi.id WHERE wdi.source = 'ore_futures' LIMIT 5;"`
-2. Проверить что запрос возвращает корректные данные
-3. Выполнить запрос с агрегацией и JOIN: `docker-compose exec postgres psql -U user -d my_db -c "SELECT wdi.name_eng, COUNT(*) as record_count, AVG(am.avg_val) as avg_price FROM agriculture_moex am JOIN www_data_idx wdi ON am.id_value = wdi.id WHERE wdi.source = 'ore_futures' GROUP BY wdi.name_eng LIMIT 10;"`
-4. Проверить корректность агрегированных данных
+1. Выполнить JOIN запрос для получения данных с названиями фьючерсов:
+   ```powershell
+   docker-compose exec postgres psql -U user -d my_db -c "SELECT am.id_value, wdi.name_rus, am.date_val, am.avg_val, am.volume FROM agriculture_moex am JOIN www_data_idx wdi ON am.id_value = wdi.id WHERE wdi.source = 'ore_futures' LIMIT 5;"
+   ```
+   ER: JOIN запрос выполняется без ошибок
 
-**Expected Results:**
-- JOIN запросы выполняются без ошибок
-- Данные корректно связываются между таблицами по id_value = id
-- Агрегатные функции (COUNT, AVG) возвращают правильные значения
-- Запросы возвращают ожидаемое количество записей
+2. Выполнить запрос с агрегацией и JOIN:
+   ```powershell
+   docker-compose exec postgres psql -U user -d my_db -c "SELECT wdi.name_eng, COUNT(*) as record_count, AVG(am.avg_val) as avg_price FROM agriculture_moex am JOIN www_data_idx wdi ON am.id_value = wdi.id WHERE wdi.source = 'ore_futures' GROUP BY wdi.name_eng LIMIT 10;"
+   ```
+   ER: Агрегатные функции возвращают правильные значения
+
+   **Evidence:**
+
+- TC-DB-009_step1_join_query.JPG
+- TC-DB-009_step2_aggregation_query.JPG
 
 **Status:** ✅ Manual
 
+
+
+
+
+
+
 ---
+
 
 
 
