@@ -1,16 +1,14 @@
 name: Continuous Delivery
 
 on:
-  push:
-    branches: [main]
   workflow_run:
-    workflows: ["CI Pipeline"]
+    workflows: ["CI Pipeline"]  # ← Ждем завершения CI
     types: [completed]
     branches: [main]
 
 jobs:
   deploy:
-    # Запускаем деплой только если CI Pipeline был успешным
+    # Запускаем только если CI был УСПЕШНЫМ
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     
