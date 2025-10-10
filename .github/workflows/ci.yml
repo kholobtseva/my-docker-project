@@ -6,7 +6,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
-    # ← ДОБАВИТЬ ЭТОТ БЛОК
     services:
       postgres:
         image: postgres:15
@@ -41,9 +40,8 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest allure-pytest
+        pip install pytest allure-pytest psycopg2-binary
         
-    # ← ДОБАВИТЬ ЭТОТ ШАГ
     - name: Setup test database
       run: |
         echo "🗄️ Настраиваем тестовую базу данных"
@@ -51,18 +49,30 @@ jobs:
         sudo apt-get install -y --no-install-recommends postgresql-client
         # Ждем пока PostgreSQL запустится
         for i in {1..30}; do
-          if pg_isready -h localhost -p 5432; then
+          if pg_isready -h localhost -p 5432 -U user; then
             echo "✅ PostgreSQL is ready!"
             break
           fi
           echo "Attempt $i/30: Waiting for PostgreSQL..."
           sleep 2
         done
-        # Инициализируем базу данных
-        PGPASSWORD=password psql -h localhost -U user -d my_db -f init.sql
+        # Проверяем существование init.sql и инициализируем базу данных
+        if [ -f "init.sql" ]; then
+          echo "📦 Инициализируем базу данных из init.sql"
+          PGPASSWORD=password psql -h localhost -U user -d my_db -f init.sql
+        else
+          echo "ℹ️ init.sql не найден, продолжаем без инициализации БД"
+        fi
         
     - name: Run tests with Allure
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_NAME: my_db
+        DB_USER: user
+        DB_PASSWORD: password
       run: |
+        echo "🧪 Запускаем тесты..."
         python -m pytest tests/ -v --alluredir=allure-results
         
     - name: Upload Allure results
@@ -93,7 +103,9 @@ jobs:
         echo "Project structure check:"
         ls -la
         echo "---"
-        ls -la app/
+        [ -d "app/" ] && ls -la app/ || echo "ℹ️ app/ directory not found"
+        echo "---"
+        [ -d "tests/" ] && ls -la tests/ || echo "ℹ️ tests/ directory not found"
         echo "---"
         [ -f "Dockerfile" ] && echo "✅ Dockerfile exists" || echo "❌ Dockerfile not found"
         [ -f "docker-compose.yml" ] && echo "✅ docker-compose.yml exists" || echo "❌ docker-compose.yml not found"
@@ -102,4 +114,5 @@ jobs:
         
     - name: Test Docker build
       run: |
+        echo "🐳 Тестируем сборку Docker образа..."
         docker build -t my-python-script:ci-test .
