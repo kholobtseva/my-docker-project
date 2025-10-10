@@ -118,3 +118,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Обновляем последовательность
 SELECT setval('www_data_idx_id_seq', (SELECT MAX(id) FROM public.www_data_idx));
+
+CREATE INDEX IF NOT EXISTS idx_agriculture_id_value ON agriculture_moex(id_value);
+CREATE INDEX IF NOT EXISTS idx_www_data_source ON www_data_idx(source);
+CREATE INDEX IF NOT EXISTS idx_agriculture_date_val ON agriculture_moex(date_val);
