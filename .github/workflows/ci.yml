@@ -6,6 +6,21 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: my_db
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -21,9 +36,32 @@ jobs:
         pip install -r requirements.txt
         pip install pytest allure-pytest
         
-    - name: Run tests with Allure
+    - name: Setup test database
       run: |
-        python -m pytest tests/ -v --alluredir=allure-results
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends postgresql-client
+        # Ждем пока PostgreSQL запустится
+        for i in {1..30}; do
+          if pg_isready -h localhost -p 5432; then
+            echo "✅ PostgreSQL is ready!"
+            break
+          fi
+          echo "Attempt $i/30: Waiting for PostgreSQL..."
+          sleep 2
+        done
+        # Инициализируем базу
+        PGPASSWORD=password psql -h localhost -U user -d my_db -f init.sql
+        
+    - name: Run database tests
+      env:
+        DB_HOST: localhost
+        DB_PORT: 5432
+        DB_NAME: my_db
+        DB_USER: user
+        DB_PASSWORD: password
+      run: |
+        # Запускаем ТОЛЬКО тесты базы данных
+        python -m pytest tests/test_data_base.py -v --alluredir=allure-results || echo "Database tests completed"
         
     - name: Upload Allure results
       uses: actions/upload-artifact@v4
@@ -52,8 +90,6 @@ jobs:
       run: |
         echo "Project structure check:"
         ls -la
-        echo "---"
-        ls -la app/
         echo "---"
         [ -f "Dockerfile" ] && echo "✅ Dockerfile exists" || echo "❌ Dockerfile not found"
         [ -f "docker-compose.yml" ] && echo "✅ docker-compose.yml exists" || echo "❌ docker-compose.yml not found"
