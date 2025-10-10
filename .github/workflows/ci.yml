@@ -6,6 +6,22 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
+    # ← ДОБАВИТЬ ЭТОТ БЛОК
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: my_db
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -26,6 +42,24 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest allure-pytest
+        
+    # ← ДОБАВИТЬ ЭТОТ ШАГ
+    - name: Setup test database
+      run: |
+        echo "🗄️ Настраиваем тестовую базу данных"
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends postgresql-client
+        # Ждем пока PostgreSQL запустится
+        for i in {1..30}; do
+          if pg_isready -h localhost -p 5432; then
+            echo "✅ PostgreSQL is ready!"
+            break
+          fi
+          echo "Attempt $i/30: Waiting for PostgreSQL..."
+          sleep 2
+        done
+        # Инициализируем базу данных
+        PGPASSWORD=password psql -h localhost -U user -d my_db -f init.sql
         
     - name: Run tests with Allure
       run: |
@@ -64,6 +98,7 @@ jobs:
         [ -f "Dockerfile" ] && echo "✅ Dockerfile exists" || echo "❌ Dockerfile not found"
         [ -f "docker-compose.yml" ] && echo "✅ docker-compose.yml exists" || echo "❌ docker-compose.yml not found"
         [ -f "requirements.txt" ] && echo "✅ requirements.txt exists" || echo "❌ requirements.txt not found"
+        [ -f "init.sql" ] && echo "✅ init.sql exists" || echo "❌ init.sql not found"
         
     - name: Test Docker build
       run: |
