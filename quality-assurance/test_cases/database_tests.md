@@ -234,18 +234,13 @@ Status: ✅ Manual
 
    **Evidence:**
 
-- TC-DB-009_step1_join_query.JPG
-- TC-DB-009_step2_aggregation_query.JPG
+- TC-DB-006_step1_join_query.JPG
+- TC-DB-006_step2_aggregation_query.JPG
 
 **Status:** ✅ Manual
 
-
-
-
-
-
-
 ---
+
 
 
 
