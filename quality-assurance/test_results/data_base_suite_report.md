@@ -13,7 +13,7 @@
 
 **Статус:** ✅ Manual ✅ PASSED
 
-
+---
 
 ### TC-DB-002: Проверка целостности данных и ограничений
 
@@ -37,6 +37,8 @@
 
 **Статус:** ✅ Manual ✅ PASSED
 
+---
+
 ### TC-DB-004: Проверка операций обновления данных
 
 | Шаг | Действие | Ожидаемый результат | Фактический результат | Статус | Доказательства |
@@ -49,3 +51,25 @@
 
 **Статус:** ✅ Manual ✅ PASSED
 
+---
+
+### TC-DB-005: Query Performance and Data Retrieval
+
+| Шаг | Действие | Ожидаемый результат | Фактический результат | Статус | Доказательства |
+|-----|----------|---------------------|----------------------|--------|----------------|
+| 1 | Проверить время выполнения базового запроса | Запрос выполняется быстро (< 100ms) | ✅ Execution Time: 0.347 ms | PASS | ![Basic Query](../screenshots/database_tests/TC-DB-005_step1_basic_query.JPG) |
+| 2 | Проверить запрос с JOIN | Запрос выполняется за разумное время (< 1 секунды) | ✅ Execution Time: 0.692 ms | PASS | ![Join Query](../screenshots/database_tests/TC-DB-005_step2_join_query.JPG) |
+| 3 | Проверить что запросы выполняются за разумное время | Оба запроса < 1 секунды | ✅ Query1: 0.142ms, Query2: 0.696ms | PASS | ![Performance Check](../screenshots/database_tests/TC-DB-005_step3_performance_check.JPG) |
+
+**Статус:** ✅ Manual ✅ PASSED
+
+---
+
+### TC-DB-006: Complex JOIN Queries Validation
+
+| Шаг | Действие | Ожидаемый результат | Фактический результат | Статус | Доказательства |
+|-----|----------|---------------------|----------------------|--------|----------------|
+| 1 | JOIN запрос с названиями фьючерсов | Запрос выполняется без ошибок | ✅ 5 записей с русскими названиями | PASS | ![Join Query](../screenshots/database_tests/TC-DB-009_step1_join_query.JPG) |
+| 2 | JOIN запрос с агрегацией | Агрегатные функции работают | ✅ COUNT и AVG возвращают данные | PASS | ![Aggregation Query](../screenshots/database_tests/TC-DB-009_step2_aggregation_query.JPG) |
+
+**Статус:** ✅ Manual ✅ PASSED
