@@ -10,6 +10,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
+    - name: Clean previous test results
+      run: |
+        echo "🧹 Очищаем предыдущие результаты тестов"
+        rm -rf allure-results
+        rm -rf allure-report
+      
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
