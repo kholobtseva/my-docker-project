@@ -1,4 +1,4 @@
-# Test Cases: End-to-End Pipeline
+# Test Cases: End-to-End Pipeline (PowerShell Version)
 
 ## Complete Data Flow Tests
 
@@ -13,11 +13,11 @@
 
 **Test Steps:**
 1. Запустить полный пайплайн: `docker-compose up python-script`
-2. Мониторить логи всех компонентов одновременно:
-   - API данные: `docker-compose logs -f python-script | grep -E "(price|volume)"`
-   - Kafka producer: `docker-compose logs python-script | grep "Kafka"`
-   - Kafka consumer: `docker-compose logs -f kafka-consumer`
-3. Проверить что данные прошли все этапы:
+2. В отдельных окнах PowerShell мониторить логи:
+   - **Окно 1:** `docker-compose logs -f python-script`
+   - **Окно 2:** `docker-compose logs -f kafka-consumer`
+3. После завершения проверить логи: `docker-compose logs python-script | findstr "price volume"`
+4. Проверить что данные прошли все этапы:
    - Данные получены от API ✅
    - Сохранены в PostgreSQL ✅  
    - Отправлены в Kafka ✅
@@ -45,12 +45,12 @@
 - Пайплайн функционирует нормально
 
 **Test Steps:**
-1. Запустить мониторинг логов всех компонентов
+1. Запустить мониторинг consumer: `docker-compose logs -f kafka-consumer`
 2. Остановить Kafka брокер: `docker-compose stop kafka`
 3. Запустить скрипт сбора данных: `docker-compose up python-script`
 4. Наблюдать ошибки подключения к Kafka в логах
 5. Запустить Kafka обратно: `docker-compose start kafka`
-6. Подождать 2 минуты для восстановления соединений
+6. Подождать 2 минуты: `Start-Sleep -Seconds 120`
 7. Проверить что данные начали поступать в Kafka
 8. Проверить что consumer обработал накопленные сообщения
 9. Убедиться что CSV файл содержит все данные
@@ -65,6 +65,7 @@
 **Status:** ✅ Manual
 
 ---
+
 ### TC-E2E-003: Data Processing Order Validation
 **Priority:** Medium  
 **Type:** Data Integrity  
@@ -74,7 +75,7 @@
 - Пайплайн работает стабильно
 
 **Test Steps:**
-1. Очистить CSV файл и Kafka топик для чистого теста
+1. Очистить CSV файл: `Remove-Item output.csv -ErrorAction SilentlyContinue`
 2. Запустить скрипт сбора данных: `docker-compose up python-script`
 3. В реальном времени отслеживать порядок обработки в логах:
    - Время получения данных от API
@@ -82,7 +83,7 @@
    - Время отправки в Kafka
    - Время обработки consumer'ом
    - Время записи в CSV
-4. Проверить временные метки в CSV файле
+4. Проверить временные метки в CSV файле: `Get-Content output.csv | Select-Object -First 5`
 5. Сравнить порядок записей в PostgreSQL и CSV
 
 **Expected Results:**
@@ -94,6 +95,7 @@
 **Status:** ✅ Manual
 
 ---
+
 ### TC-E2E-004: Data Integrity Across Pipeline Stages
 **Priority:** High  
 **Type:** Data Integrity  
@@ -121,12 +123,13 @@
 - Данные идентичны на всех этапах пайплайна
 - Числовые значения не искажаются (price, volume)
 - Текстовые поля сохраняются без изменений
-- Отсутствуют потери данных между этапами
+- Отсутствуют потери данных между этапам
 - Все обязательные поля присутствуют везде
 
 **Status:** ✅ Manual
 
 ---
+
 ### TC-E2E-005: Parallel Component Operation Testing
 **Priority:** Medium  
 **Type:** Performance  
@@ -144,7 +147,7 @@
    - Producer отправляет новые сообщения
    - Consumer продолжает обрабатывать сообщения
    - Отсутствуют конфликты в БД
-4. Проверить что в CSV файле данные от всех запусков
+4. Проверить что в CSV файле данные от всех запусков: `Get-Content output.csv`
 5. Проверить отсутствие дубликатов в PostgreSQL
 
 **Expected Results:**
@@ -158,6 +161,7 @@
 **Status:** ✅ Manual
 
 ---
+
 ### TC-E2E-006: Large Volume Data Processing
 **Priority:** Medium  
 **Type:** Performance  
@@ -184,7 +188,5 @@
 - Все данные успешно проходят через весь пайплайн
 - Отсутствуют таймауты или ошибки переполнения
 - Данные сохраняются полностью без потерь
-  
-**Status:** ✅ Manual
 
----
+**Status:** ✅ Manual
