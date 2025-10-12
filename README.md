@@ -139,9 +139,10 @@ pause
 <img src="https://img.shields.io/badge/PostgreSQL-15-blue?logo=postgresql" alt="PostgreSQL"> 
 <img src="https://img.shields.io/badge/Docker-✓-blue?logo=docker" alt="Docker"> 
 <img src="https://img.shields.io/badge/Docker_Compose-✓-blue?logo=docker" alt="Docker Compose">
+<img src="https://img.shields.io/badge/Git-✓-lightgrey?logo=git" alt="Git"> 
+<img src="https://img.shields.io/badge/GitHub-✓-lightgrey?logo=github" alt="GitHub">
 
 **UI Tools:**  
-<img src="https://img.shields.io/badge/Kafdrop-✓-lightblue?logo=apachekafka" alt="Kafdrop"> *(мониторинг)*
 <img src="https://img.shields.io/badge/AKHQ-✓-lightblue?logo=apachekafka" alt="AKHQ"> *(управление + тестирование)*
 
 ## Мониторинг, аналитика и логирование:
@@ -150,16 +151,11 @@ pause
 <img src="https://img.shields.io/badge/Apache_Kafka-✓-green?logo=apachekafka" alt="Kafka">
 <img src="https://img.shields.io/badge/Kafdrop-✓-green?logo=apachekafka" alt="Kafdrop">
 <img src="https://img.shields.io/badge/Graylog-✓-green?logo=graylog" alt="Graylog">
-<img src="https://img.shields.io/badge/Centralized_Logging-✓-green" alt="Centralized Logging">
 
 ##  Брокер сообщений (Message Broker):
 <img src="https://img.shields.io/badge/Kafka_Producer-✓-orange" alt="Kafka Producer">
 <img src="https://img.shields.io/badge/Kafka_Consumer-✓-orange" alt="Kafka Consumer">
 <img src="https://img.shields.io/badge/Zookeeper-✓-orange" alt="Zookeeper">
-
-## Инструменты: 
-<img src="https://img.shields.io/badge/Git-✓-lightgrey?logo=git" alt="Git"> 
-<img src="https://img.shields.io/badge/GitHub-✓-lightgrey?logo=github" alt="GitHub">
 
 ## 🐳 Docker Image
 
@@ -169,7 +165,7 @@ pause
 
 ### Использование готового образа:
 
-docker pull kholobtseva/my-python-script:latest
+docker pull kholobtseva/my-python-script:latest  
 docker run -d kholobtseva/my-python-script:latest
 
 ## 🚀 CI/CD Pipeline
@@ -312,6 +308,7 @@ allure serve allure-results
 - **Security** - санитизация данных и защита от инъекций
 - **Data Validation** - формат данных, обязательные поля, обработка ошибок
 - **End-to-End тестирование** - полный цикл данных от API до CSV
+
 
 
 
