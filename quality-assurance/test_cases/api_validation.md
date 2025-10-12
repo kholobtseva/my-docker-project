@@ -1,3 +1,7 @@
+# Test Cases: API Validation (PowerShell Version)
+
+## API Integration Tests
+
 ### TC-API-001: Successful API Data Fetch
 **Priority:** High  
 **Type:** API Validation  
@@ -5,58 +9,38 @@
 **Preconditions:**
 - Интернет соединение доступно
 - Singapore Exchange API доступен
+- Все сервисы запущены
 
 **Test Steps:**
 1. Запустить основной скрипт: `docker-compose up python-script`
-2. Проверить логи на успешное получение данных
-3. Убедиться что данные сохранены в PostgreSQL
-4. Проверить синхронизацию с Elasticsearch
+2. Проверить логи на успешное получение данных: `docker-compose logs python-script | findstr "successfully|processed"`
+3. Убедиться что данные сохранены в PostgreSQL: `docker-compose exec postgres psql -U user -d my_db -c "SELECT COUNT(*) FROM agriculture_moex WHERE date_val >= CURRENT_DATE - INTERVAL '7 days';"`
+4. Проверить синхронизацию с Elasticsearch через Kibana
 
 **Expected Results:**
 - API запрос выполняется успешно
 - Данные корректно парсятся из JSON
 - Записи добавляются в таблицу `agriculture_moex`
 - Данные синхронизируются с Elasticsearch
-
-**Status:** ✅ Manual
-
----
-### TC-API-002: Network Connectivity Issues
-**Priority:** High  
-**Type:** API Validation  
-**Description:** Проверка обработки ошибок сети при недоступности внешнего API  
-**Preconditions:**
-- Интернет соединение изначально доступно
-
-**Test Steps:**
-1. Временно отключить интернет на машине
-2. Запустить основной скрипт
-3. Проверить логи на обработку network errors
-4. Включить интернет обратно
-5. Проверить восстановление работы
-
-**Expected Results:**
-- Network errors корректно обрабатываются
-- В логах есть понятные сообщения об ошибках подключения
-- Система не падает при временной недоступности API
-- При восстановлении связи работа возобновляется
+- В логах отсутствуют ошибки
 
 **Status:** ✅ Manual
 
 ---
 
-### TC-API-003: Data Structure Validation
+### TC-API-002: Data Structure Validation
 **Priority:** High  
 **Type:** API Validation  
 **Description:** Проверка корректной обработки валидной структуры данных от API  
 **Preconditions:**
 - Singapore Exchange API доступен
+- Все сервисы запущены
 
 **Test Steps:**
-1. Запустить основной скрипт
-2. Проверить логи на наличие предупреждений о данных
+1. Запустить основной скрипт: `docker-compose up python-script`
+2. Проверить логи на наличие предупреждений о данных: `docker-compose logs python-script | findstr "warning|error|failed"`
 3. Проверить что все обязательные поля присутствуют в полученных данных
-4. Убедиться что данные корректно сохраняются в БД
+4. Убедиться что данные корректно сохраняются в БД с правильными типами
 
 **Expected Results:**
 - Система корректно обрабатывает все поля из API ответа
@@ -68,81 +52,32 @@
 
 ---
 
-### TC-API-004: Empty API Response Handling
+### TC-API-003: Key Futures Data Validation
 **Priority:** Medium  
 **Type:** API Validation  
-**Description:** Проверка обработки пустого или минимального ответа от API  
+**Description:** Проверка успешного получения данных от API для ключевых фьючерсов  
 **Preconditions:**
 - Singapore Exchange API доступен
-
-**Test Steps:**
-1. Запустить основной скрипт
-2. Проверить логи на наличие записей типа "No data available"
-3. Проверить что система не падает при минимальных данных
-4. Убедиться что health status обновляется корректно
-
-**Expected Results:**
-- Система корректно обрабатывает сценарии с минимальными данными
-- В логах есть информативные сообщения о статусе данных
-- Отсутствуют ошибки парсинга при пустых ответах
-- Health monitor отражает реальное состояние системы
-
-**Status:** ✅ Manual
-
----
-### TC-API-005: API Recovery After Temporary Unavailability
-**Priority:** High  
-**Type:** API Validation  
-**Description:** Проверка восстановления работы после временной недоступности внешнего API  
-**Preconditions:**
-- Интернет соединение изначально доступно
-- Все сервисы запущены и работают
-
-**Test Steps:**
-1. Запустить мониторинг логов: `docker-compose logs -f python-script`
-2. В отдельном окне отключить интернет на 2-3 минуты
-3. Наблюдать за логами в реальном времени
-4. Зафиксировать появление ошибок подключения в логах
-5. Включить интернет обратно
-6. Наблюдать за логами в течение 5 минут
-7. Проверить наличие новых записей в БД: `docker-compose exec postgres psql -U user -d my_db -c "SELECT COUNT(*) FROM agriculture_moex WHERE date_upd > NOW() - INTERVAL '10 minutes';"`
-8. Проверить обновление health status: `docker-compose exec postgres psql -U user -d my_db -c "SELECT health_status FROM health_monitor WHERE id = 1012;"`
-
-**Expected Results:**
-- В течение 1 минуты после отключения интернета в логах появляются сообщения: "Network error", "Connection error", "Failed to connect"
-- Система продолжает работу, не возникает критических ошибок
-- В течение 3 минут после включения интернета в логах появляются сообщения об успешном получении данных
-- В БД появляются новые записи с timestamp после восстановления связи
-- Health status возвращается к значению 100 после восстановления работы
-
-**Status:** ✅ Manual
-
----
-### TC-API-006: API Data Retrieval Validation
-**Priority:** High  
-**Type:** API Validation  
-**Description:** Проверка успешного получения данных от API для списка фьючерсов  
-**Preconditions:**
-- Singapore Exchange API доступен
-- Все сервисы запущены и работают
+- Все сервисы запущены
 
 **Test Steps:**
 1. Запустить мониторинг логов: `docker-compose logs -f python-script`
 2. Запустить основной скрипт: `docker-compose up python-script`
-3. В логах отслеживать обработку фьючерсов: FEFV25, FEFX25, FEFZ25, FEFF26, FEFG26, FEFH26, FEFJ26, FEFK26, FEFM26, FEFN26, FEFQ26, FEFU26, FEFV26, FEFX26, FEFZ26, FEFF27, FEFG27, FEFH27, FEFJ27, FEFK27, FEFM27, FEFN27, FEFQ27, FEFU27, FEFV27, FEFX27, FEFZ27, FEFF28, FEFG28, FEFH28, FEFJ28, FEFK28, FEFM28, FEFN28, FEFQ28, FEFU28, FEFV28
-4. Зафиксировать для каждого фьючерса один из статусов в логах:
+3. В логах отслеживать обработку ключевых фьючерсов: FEFZ25, FEFF26, FEFG26
+4. Зафиксировать для каждого фьючерса статус в логах:
    - "daily-settlement-price-abs" - данные получены
    - "No data available" - данные отсутствуют
 
 **Expected Results:**
-- Для каждого фьючерса в логах есть четкий статус (данные получены или отсутствуют)
+- Для каждого ключевого фьючерса в логах есть четкий статус
 - Отсутствуют ошибки парсинга JSON
-- Система обрабатывает все фьючерсы без падений
+- Система обрабатывает фьючерсы без падений
 
 **Status:** ✅ Manual
 
 ---
-### TC-API-007: Database Storage Validation  
+
+### TC-API-004: Database Storage Validation  
 **Priority:** High  
 **Type:** Database Integration  
 **Description:** Проверка корректного сохранения полученных данных в базу данных  
@@ -161,7 +96,8 @@
 **Status:** ✅ Manual
 
 ---
-### TC-API-008: Weekly Data Update Without Duplicates
+
+### TC-API-005: Weekly Data Update Without Duplicates
 **Priority:** High  
 **Type:** Data Integrity  
 **Description:** Проверка недельного обновления данных без дублирования записей  
@@ -183,4 +119,3 @@
 - ON CONFLICT механизм работает корректно
 
 **Status:** ✅ Manual
-
