@@ -9,6 +9,57 @@
  **Почему микросервисы для простой задачи?**   
 - Каждая технология в проекте представляет отдельный сервис с четкими границами ответственности, что соответствует принципам микросервисного подхода.
 
+```mermaid
+graph TB
+    %% Data Sources
+    API[Singapore Exchange API] --> Python[Python ETL Script<br/>main.py]
+    
+    %% Primary Data Flow
+    Python --> PG[PostgreSQL<br/>Primary Storage]
+    
+    %% Data Synchronization from PostgreSQL
+    PG --> Sync[Data Sync Process]
+    Sync --> ES[Elasticsearch<br/>Search & Analytics]
+    Sync --> Kafka[Kafka Broker<br/>Topic: market-data]
+    
+    %% Data Processing & Export
+    Kafka --> KafkaC[Kafka Consumer<br/>kafka_consumer.py]
+    KafkaC --> CSV[CSV Export<br/>/app/logs/kafka_messages.csv]
+    
+    %% Analytics & Visualization
+    ES --> Kibana[Kibana<br/>Dashboards & Discovery]
+    
+    %% Infrastructure & Dependencies
+    ZK[Zookeeper] --> Kafka
+    MongoDB[MongoDB] --> Graylog[Graylog<br/>Centralized Logging]
+    
+    %% Monitoring Interfaces
+    Kafka --> Kafdrop[Kafdrop UI<br/>Topic Monitoring]
+    Kafka --> AKHQ[AKHQ UI<br/>Management & Testing]
+    
+    %% Logging & Status - ТОЛЬКО из Python скриптов
+    Python -->|GELF UDP| Graylog
+    Python -->|Console Output| Status[Status Display]
+    KafkaC -->|GELF UDP| Graylog
+    
+    %% Styling
+    classDef dataSource fill:#e1f5fe
+    classDef database fill:#f3e5f5
+    classDef queue fill:#fff3e0
+    classDef monitoring fill:#e8f5e8
+    classDef ui fill:#fce4ec
+    classDef output fill:#fff9c4
+    classDef processing fill:#ffebee
+    
+    class API,Python dataSource
+    class PG,ES,MongoDB database
+    class Kafka,KafkaC queue
+    class Graylog,Kibana monitoring
+    class Kafdrop,AKHQ ui
+    class Status,CSV output
+    class Sync processing
+```
+
 ## 🛠 Ключевые компетенции
 
 ### 🔧 Data Engineering & DevOps
@@ -308,6 +359,7 @@ allure serve allure-results
 - **Security** - санитизация данных и защита от инъекций
 - **Data Validation** - формат данных, обязательные поля, обработка ошибок
 - **End-to-End тестирование** - полный цикл данных от API до CSV
+
 
 
 
