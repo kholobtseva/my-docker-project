@@ -40,6 +40,11 @@ INSERT INTO public.health_monitor (id, health_status, add_text)
 VALUES (1012, 100, '') 
 ON CONFLICT (id) DO NOTHING;
 
+
+INSERT INTO public.health_monitor (id, health_status, add_text) 
+VALUES (1001, 100, 'MOEX script') 
+ON CONFLICT (id) DO NOTHING;
+
 -- Создание последовательности для www_data_idx
 CREATE SEQUENCE IF NOT EXISTS www_data_idx_id_seq;
 ALTER TABLE public.www_data_idx ALTER COLUMN id SET DEFAULT nextval('www_data_idx_id_seq');

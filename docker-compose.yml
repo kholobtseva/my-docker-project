@@ -24,6 +24,22 @@ services:
     volumes:
       - .:/app
 
+  moex-script:
+    build: .
+    command: python app/main_moex.py
+    depends_on:
+      - postgres
+      - kafka
+      - elasticsearch
+    environment:
+      DB_HOST: postgres
+      DB_NAME: my_db
+      DB_USER: user
+      DB_PASSWORD: password
+    volumes:
+      - .:/app
+    restart: "no"
+
   elasticsearch:
     image: elasticsearch:7.17.0
     environment:
@@ -71,6 +87,16 @@ services:
   kafka-consumer:
     build: .
     command: python app/kafka_consumer.py
+    depends_on:
+      kafka:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+  kafka-consumer-moex:
+    build: .
+    command: python app/kafka_consumer_moex.py
     depends_on:
       kafka:
         condition: service_healthy

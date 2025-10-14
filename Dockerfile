@@ -17,6 +17,7 @@ RUN pip install -r requirements.txt
 COPY . .
 
 # Даем скрипту права на выполнение
-RUN chmod +x app/main.py
+# RUN chmod +x app/main.py
+RUN chmod +x app/*.py
 
 CMD ["sleep", "infinity"]
