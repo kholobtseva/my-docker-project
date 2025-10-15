@@ -1,9 +1,9 @@
 # My Microservices Data Pipeline
 
 ## Описание  
-Практическая реализация микросервисной архитектуры для демонстрации работы QA инженера с современным стеком технологий. Проект использует сбор данных с Singapore Exchange как use-case для отработки полного цикла обработки данных в распределенной системе и их тестирование.
-В основе проекта лежит мой отлаженный скрипт, который успешно работал в продакшене более 1.5 лет. Я расширила его до полноценной системы, чтобы углубленно изучить работу QA инженера с микросервисной архитектурой и современные DevOps-практики. Архитектура сознательно сохраняет "неоптимальные" элементы для учебных целей:
-- Сохранен оригинальный рабочий скрипт
+Практическая реализация микросервисной архитектуры для демонстрации работы QA инженера с современным стеком технологий. Проект использует сбор данных с API Singapore Exchange и ISS MOEX  как use-case для отработки полного цикла обработки данных в распределенной системе и их тестирование.
+В основе проекта лежат мои отлаженные скрипты, которые успешно работали в продакшене более 1.5 лет. Я расширила их до полноценной системы, чтобы углубленно изучить работу QA инженера с микросервисной архитектурой и современные DevOps-практики. Архитектура сознательно сохраняет "неоптимальные" элементы для учебных целей:
+- Сохранены оригинальные рабочие скрипты
 - Добавлены новые технологии поверх существующей логики.
 
  **Почему микросервисы для простой задачи?**   
@@ -11,53 +11,80 @@
 
 ```mermaid
 graph TB
-    %% Data Sources
-    API[Singapore Exchange API] --> Python[Python ETL Script<br/>main.py]
+    %% Data Sources - слева
+    SGX[SGX Futures]
+    MOEX_IDX[MOEX Indices] 
+    MOEX_FUT[MOEX Futures]
     
-    %% Primary Data Flow
-    Python --> PG[PostgreSQL<br/>Primary Storage]
+    %% Infrastructure - слева снизу
+    ZK[Zookeeper]
+    MongoDB[MongoDB]
     
-    %% Data Synchronization from PostgreSQL
-    PG --> Sync[Data Sync Process]
-    Sync --> ES[Elasticsearch<br/>Search & Analytics]
-    Sync --> Kafka[Kafka Broker<br/>Topic: market-data]
+    %% Python Processing - центр слева
+    PyETL[Python ETL Scripts]
     
-    %% Data Processing & Export
-    Kafka --> KafkaC[Kafka Consumer<br/>kafka_consumer.py]
-    KafkaC --> CSV[CSV Export<br/>/app/logs/kafka_messages.csv]
+    %% Core Storage - центр
+    PG[PostgreSQL]
+    Sync[Data Sync]
     
-    %% Analytics & Visualization
-    ES --> Kibana[Kibana<br/>Dashboards & Discovery]
+    %% Streaming & Search - центр справа
+    Kafka[Kafka]
+    ES[Elasticsearch]
     
-    %% Infrastructure & Dependencies
-    ZK[Zookeeper] --> Kafka
-    MongoDB[MongoDB] --> Graylog[Graylog<br/>Centralized Logging]
+    %% Python Consumers - справа сверху
+    PyCons[Python Consumers]
+    CSV[CSV Files]
     
-    %% Monitoring Interfaces
-    Kafka --> Kafdrop[Kafdrop UI<br/>Topic Monitoring]
-    Kafka --> AKHQ[AKHQ UI<br/>Management & Testing]
+    %% Monitoring - справа снизу
+    Graylog[Graylog]
+    Kibana[Kibana]
     
-    %% Logging & Status - ТОЛЬКО из Python скриптов
-    Python -->|GELF UDP| Graylog
-    Python -->|Console Output| Status[Status Display]
-    KafkaC -->|GELF UDP| Graylog
+    %% Kafka UI - справа сверху
+    Kafdrop[Kafdrop]
+    AKHQ[AKHQ]
+    
+    %% Data Flow - горизонтальные связи
+    SGX --> PyETL
+    MOEX_IDX --> PyETL
+    MOEX_FUT --> PyETL
+    
+    PyETL --> PG
+    PG --> Sync
+    Sync --> Kafka
+    Sync --> ES
+    
+    %% Infrastructure connections - слева
+    ZK --> Kafka
+    MongoDB --> Graylog
+    
+    Kafka --> PyCons
+    PyCons --> CSV
+    
+    %% Monitoring Flow
+    PyETL --> Graylog
+    PyCons --> Graylog
+    ES --> Kibana
+    
+    %% Kafka UI Flow
+    Kafka --> Kafdrop
+    Kafka --> AKHQ
     
     %% Styling
-    classDef dataSource fill:#e1f5fe
-    classDef database fill:#f3e5f5
-    classDef queue fill:#fff3e0
-    classDef monitoring fill:#e8f5e8
-    classDef ui fill:#fce4ec
+    classDef source fill:#e1f5fe
+    classDef python fill:#ffebee
+    classDef core fill:#f3e5f5
     classDef output fill:#fff9c4
-    classDef processing fill:#ffebee
+    classDef monitor fill:#e8f5e8
+    classDef ui fill:#fce4ec
+    classDef infra fill:#e0f2f1
     
-    class API,Python dataSource
-    class PG,ES,MongoDB database
-    class Kafka,KafkaC queue
-    class Graylog,Kibana monitoring
+    class SGX,MOEX_IDX,MOEX_FUT source
+    class PyETL,PyCons python
+    class PG,Sync,Kafka,ES core
+    class CSV output
+    class Graylog,Kibana monitor
     class Kafdrop,AKHQ ui
-    class Status,CSV output
-    class Sync processing
+    class ZK,MongoDB infra
 ```
 
 ## 🛠 Ключевые компетенции
@@ -359,6 +386,7 @@ allure serve allure-results
 ### 📋 Что включено в отчет
 - **47 тестов** (unit-тесты, авто тесты базы данных и тест-документация процессов)
 - **Реальные доказательства тестирования:** логи, скриншоты, JSON сообщения
+
 
 
 
