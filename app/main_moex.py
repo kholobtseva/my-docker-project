@@ -1,22 +1,16 @@
 import sys
 import os
 import time
-from datetime import timezone
+from datetime import datetime, timedelta, date
 import requests
 import json
 import psycopg2
-import csv
-from datetime import datetime, timedelta, date
-from dateutil.relativedelta import *
-from decimal import Decimal
-
-# Импортируем наши модули
-from core.logging_utils import setup_logging
+from core.logging_utils import setup_logging, setup_graylog_logger
 from core.kafka_utils import KafkaManager
 from core.elastic_utils import ElasticsearchManager
-from core.logging_utils import setup_graylog_logger
+from core.validation_utils import UniversalDataValidator
 
-# Константы и настройки (такие же как в main)
+# Константы и настройки
 health_status = 100
 DB_CONFIG = {
     "host": "postgres",
@@ -26,7 +20,7 @@ DB_CONFIG = {
     "port": "5432"
 }
 
-# Классы (совместимые с main)
+
 class SetInformation:
     @staticmethod
     def set(cursor, id_value, data):
@@ -58,7 +52,6 @@ class SetInformation:
             data[5] if data[5] is not None else None,
             data[6] if data[6] is not None else None
         ))
-        
 
 class Api:
     @staticmethod
@@ -67,21 +60,55 @@ class Api:
         try:
             logger.info(f"Fetching MOEX data for {contract_name}")
             response = requests.get(url)
-            data = json.loads(response.text)
-            if len(data['history']['data']) == 0:
+            
+            if response.status_code != 200:
+                logger.warning(f"MOEX API returned status {response.status_code} for {contract_name}")
                 health_status = 0
-                raise ValueError(f'\nNo data available for {contract_name}\n')
+                return []
+            
+            response_data = response.text
+            if not response_data:
+                logger.warning(f"Empty MOEX response for {contract_name}")
+                health_status = 0
+                return []
+                
+            data = json.loads(response_data)
+            
+            if 'history' not in data:
+                logger.warning(f"No 'history' field in MOEX response for {contract_name}")
+                health_status = 0
+                return []
+                
+            if 'data' not in data['history']:
+                logger.warning(f"No 'data' field in MOEX history for {contract_name}")
+                health_status = 0
+                return []
+                
+            if data['history']['data'] is None:
+                logger.warning(f"MOEX Data is None for {contract_name}")
+                health_status = 0
+                return []
+                
+            if not isinstance(data['history']['data'], list):
+                logger.warning(f"MOEX Data is not a list for {contract_name}, type: {type(data['history']['data'])}")
+                health_status = 0
+                return []
+                
+            if len(data['history']['data']) == 0:
+                logger.warning(f"Empty MOEX data list for {contract_name}")
+                health_status = 0
+                return []
 
+            logger.info(f"Successfully retrieved {len(data['history']['data'])} MOEX records for {contract_name}")
             return data['history']['data']
 
         except requests.exceptions.RequestException as er:
             health_status = 0
             logger.error(f'MOEX Network error for {contract_name}: {er}')
             return []
-
-        except ValueError as err:
+        except json.JSONDecodeError as e:
             health_status = 0
-            logger.error(f'MOEX Data error for {contract_name}: {err}')
+            logger.error(f"MOEX JSON decode error for {contract_name}: {e}")
             return []
         except Exception as e:
             logger.error(f'Unexpected MOEX error for {contract_name}: {str(e)}')
@@ -128,11 +155,11 @@ def set_status_robot(id, health_status, add_text):
     except Exception as e:
         logger.error(f"Error updating MOEX health status: {e}")
 
-def sync_to_elasticsearch():
+def sync_to_elasticsearch(validator):
     """Синхронизация MOEX данных с Elasticsearch"""
     try:
-        logger.info("Starting MOEX Elasticsearch synchronization...")
-        
+        logger.info("🚀 Starting MOEX Elasticsearch synchronization...")
+  
         conn = psycopg2.connect(**DB_CONFIG)
         cursor = conn.cursor()
         
@@ -147,6 +174,7 @@ def sync_to_elasticsearch():
         
         synced_count = 0
         kafka_sent_count = 0
+        validation_errors = 0
         
         for row in cursor.fetchall():
             doc = {
@@ -161,33 +189,53 @@ def sync_to_elasticsearch():
                 'sync_timestamp': datetime.now().isoformat()
             }
             
-            # Отправка в Elasticsearch
-            es_result = es_manager.send_data(doc, 'agriculture-data')
+            # ВАЛИДАЦИЯ перед отправкой
+            is_valid, errors = validator.validate_for_kafka(doc)
+
+            if not is_valid:
+                # Отправка в dead letter queue
+                dlq_result = validator.send_to_dead_letter_queue(
+                    doc,
+                    errors,
+                    'moex-market-data',
+                    'moex'
+                )
+                validation_errors += 1
+                logger.warning(f"Validation failed for {doc.get('contract')}: {errors}")
+                continue
             
-            # Отправка в Kafka в отдельный топик
+            
+            es_result = es_manager.send_data(doc, 'agriculture-data')
+            if es_result:
+                synced_count += 1
+                logger.info(f"✅ ES SUCCESS: {doc.get('contract')} - {doc.get('date')}")
+            else:
+                logger.error(f"❌ ES FAILED: {doc.get('contract')}")
+            
+            # Отправка в Kafka
             kafka_result = kafka_manager.send_message('moex-market-data', doc)
             if kafka_result:
                 kafka_sent_count += 1
-                logger.info(f"SUCCESS MOEX data sent to Kafka: {doc.get('contract', 'Unknown')} - {doc.get('date', 'No date')}")
-            else:
-                logger.warning(f"FAILED to send MOEX data to Kafka: {doc.get('contract', 'Unknown')}")
+                logger.info(f"✅ KAFKA SUCCESS: {doc.get('contract')} - {doc.get('date')}")
             
-            synced_count += 1
-        
         kafka_manager.flush()
-        logger.info(f"SUCCESS MOEX synchronization completed! ES: {synced_count}, Kafka: {kafka_sent_count}")
+        logger.info(f"🎉 MOEX SYNC COMPLETE! ES: {synced_count}, Kafka: {kafka_sent_count}, Validation errors: {validation_errors}")
         
         cursor.close()
         conn.close()
         
     except Exception as e:
-        logger.error(f"ERROR MOEX Elasticsearch synchronization error: {e}")
-
+        logger.error(f"💥 MOEX Elasticsearch synchronization error: {e}")
+        
+        
 # Основная функция MOEX
 def main_moex():
     global health_status, kafka_manager, es_manager
-     
+    
     logger.info("MOEX script started")
+    
+    # Инициализация валидатора
+    validator = UniversalDataValidator(kafka_manager, 'moex_script')
     
     try:
         to_log_file("\n\n\nSTART MOEX RUN SCRIPT\n", True)
@@ -207,8 +255,9 @@ def main_moex():
         
         total_processed = 0
         successful_contracts = 0
+        validation_errors = 0
         
-        # Период для данных (последние 7 дней как в оригинальном скрипте)
+        # Период для данных (последние 7 дней)
         d1 = date.today() - timedelta(days=7)
         d2 = date.today()
         
@@ -224,47 +273,116 @@ def main_moex():
                 successful_contracts += 1
                 print(f"✅ MOEX Processing {len(data_points)} records for {row[1]}")
                 
-                # Вставляем данные в БД
+                # ОБРАБОТКА ДАННЫХ С ВАЛИДАЦИЕЙ
                 for data_point in data_points:
-                    # MOEX данные: SECID,TRADEDATE,LOW,HIGH,CLOSE,VOLUME,CURRENCYID
-                    data = []
-                    data.append(row[0])  # id
-                    data.append(data_point[1])  # TRADEDATE
-                    data.append(data_point[2])  # LOW (min_val)
-                    data.append(data_point[3])  # HIGH (max_val)  
-                    data.append(data_point[4])  # CLOSE (avg_val)
-                    data.append(data_point[5])  # VOLUME
-                    data.append(data_point[6])  # CURRENCYID
+                    # ВАЛИДАЦИЯ СТРУКТУРЫ MOEX API данных
+                    is_valid_structure, structure_errors = validator.validate_basic_structure(data_point, 'moex_api')
                     
+                    if not is_valid_structure:
+                        validator.send_to_dead_letter_queue(
+                            {'contract': row[1], 'raw_data': data_point},
+                            structure_errors,
+                            'moex-market-data',
+                            'moex_api'
+                        )
+                        validation_errors += 1
+                        logger.warning(f"MOEX API structure validation failed for {row[1]}: {structure_errors}")
+                        continue
+                    
+                    # ВАЛИДАЦИЯ ДАТЫ
+                    is_valid_date, date_error = validator.validate_date_field(data_point[1], 'TRADEDATE')
+                    if not is_valid_date:
+                        validator.send_to_dead_letter_queue(
+                            {'contract': row[1], 'raw_data': data_point},
+                            [date_error],
+                            'moex-market-data',
+                            'moex_api'
+                        )
+                        validation_errors += 1
+                        logger.warning(f"MOEX date validation failed for {row[1]}: {date_error}")
+                        continue
+                    
+                    # КОНВЕРТАЦИЯ В СТРУКТУРИРОВАННЫЙ ФОРМАТ
                     try:
+                        structured_data = validator.convert_moex_api_to_structured(data_point, row[0])
+                    except ValueError as e:
+                        validator.send_to_dead_letter_queue(
+                            {'contract': row[1], 'raw_data': data_point},
+                            [str(e)],
+                            'moex-market-data',
+                            'moex_api'
+                        )
+                        validation_errors += 1
+                        logger.warning(f"MOEX data conversion failed for {row[1]}: {e}")
+                        continue
+                    
+                    # ВАЛИДАЦИЯ СТРУКТУРИРОВАННЫХ ДАННЫХ
+                    is_valid_structured, structured_errors = validator.validate_basic_structure(structured_data, 'structured')
+                    if not is_valid_structured:
+                        validator.send_to_dead_letter_queue(
+                            structured_data,
+                            structured_errors,
+                            'moex-market-data',
+                            'moex_structured'
+                        )
+                        validation_errors += 1
+                        logger.warning(f"MOEX structured data validation failed for {row[1]}: {structured_errors}")
+                        continue
+                    
+                    # СОХРАНЕНИЕ В БД
+                    try:
+                        data = [
+                            structured_data['id_value'],
+                            structured_data['date_val'],
+                            structured_data['min_val'],
+                            structured_data['max_val'],
+                            structured_data['avg_val'],
+                            structured_data['volume'],
+                            structured_data['currency']
+                        ]
+                        
                         SetInformation().set(cursor, row[0], data)
                         total_processed += 1
+                        logger.debug(f"MOEX data inserted/updated for {row[1]}", extra={
+                            'extra_data': {
+                                'event_type': 'moex_data_upserted',
+                                'contract': row[1],
+                                'date': structured_data['date_val'],
+                                'price': structured_data['avg_val']
+                            }
+                        })
                     except Exception as e:
                         logger.error(f"MOEX Error inserting data for {row[1]}: {e}")
                         health_status = 0
             else:
                 print(f"❌ MOEX No data for {row[1]}")
+                logger.warning(f"No MOEX data retrieved for contract: {row[1]}")
     
         # Комитим изменения и закрываем соединение
         conn.commit()
         cursor.close()
         conn.close()
         
-        # Синхронизируем с Elasticsearch
-        sync_to_elasticsearch()
+        # Синхронизируем с Elasticsearch (передаем валидатор)
+        sync_to_elasticsearch(validator)
         
-        # Обновляем статус (используем другой ID для MOEX)
-        set_status_robot(1001, health_status, '')
+        # Обновляем статус
+        status_text = f'Processed: {total_processed}, Validation errors: {validation_errors}'
+        set_status_robot(1001, health_status, status_text)
         
         to_log_file("\nFINISH MOEX RUN SCRIPT\n", True)
-        #print(f"\n🎉 MOEX COMPLETED: Processed {total_processed} records from {successful_contracts} contracts")
-        logger.info(f"MOEX script completed: {total_processed} records from {successful_contracts} contracts")
+        print(f"\n🎉 MOEX COMPLETED: Processed {total_processed} records from {successful_contracts} contracts, validation errors: {validation_errors}")
+        logger.info(f"MOEX script completed: {total_processed} records from {successful_contracts} contracts, validation errors: {validation_errors}")
         
+    except psycopg2.Error as db_error:
+        logger.error(f"MOEX Database error: {db_error}")
+        health_status = 0
+        set_status_robot(1001, health_status, f'Database error: {db_error}')
     except Exception as e:
         logger.error("Error in MOEX main", extra={'error': str(e)})
         print(f"MOEX Error: {e}")
         health_status = 0
-        set_status_robot(1001, health_status, '')
+        set_status_robot(1001, health_status, f'Runtime error: {e}')
 
 # Точка входа
 if __name__ == "__main__":

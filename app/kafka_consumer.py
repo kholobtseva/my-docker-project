@@ -1,4 +1,3 @@
-# app/kafka_consumer_refactored.py - Полная версия consumer с использованием модулей
 import json
 import logging
 import csv
@@ -9,49 +8,14 @@ import sys
 from datetime import datetime
 from kafka import KafkaProducer
 from kafka.errors import NoBrokersAvailable
-import jsonschema
-from jsonschema import validate
 
-# Импортируем наши модули
 from core.logging_utils import setup_logging
 from core.kafka_utils import create_kafka_consumer, KafkaManager
 from core.logging_utils import setup_graylog_logger
+from core.validation_utils import UniversalDataValidator
 
-# Настройка логирования
 logger = setup_logging('kafka_consumer')
 graylog_logger = setup_graylog_logger('kafka_consumer')
-
-# Data validation schema
-DATA_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "id_value": {"type": "number"},
-        "date": {"type": "string", "format": "date"},
-        "price": {"type": "number"},
-        "contract": {"type": "string"},
-        "name_rus": {"type": "string"},
-        "source": {"type": "string"},
-        "volume": {"type": ["number", "null"]},
-        "currency": {"type": "string"},
-        "sync_timestamp": {"type": "string"}
-    },
-    "required": ["id_value", "date", "price", "contract", "name_rus", "source", "currency", "sync_timestamp"]
-}
-
-def validate_date_format(date_str):
-    """Validate date format (YYYY-MM-DD)"""
-    if not date_str or not isinstance(date_str, str):
-        return False
-        
-    try:
-        parsed_date = datetime.strptime(date_str, '%Y-%m-%d')
-        if (parsed_date.year < 1900 or parsed_date.year > 2100 or
-            parsed_date.month < 1 or parsed_date.month > 12 or
-            parsed_date.day < 1 or parsed_date.day > 31):
-            return False
-        return True
-    except ValueError:
-        return False
 
 class DeadLetterQueueProducer:
     def __init__(self, bootstrap_servers):
@@ -60,7 +24,6 @@ class DeadLetterQueueProducer:
         self._initialize_producer()
     
     def _initialize_producer(self):
-        """Initialize DLQ producer"""
         try:
             self.producer = KafkaProducer(
                 bootstrap_servers=self.bootstrap_servers,
@@ -83,7 +46,6 @@ class DeadLetterQueueProducer:
             self.producer = None
     
     def send_to_dlq(self, original_message, error_reason, raw_value=None):
-        """Send invalid message to DLQ"""
         if not self.producer:
             logger.error("DLQ producer not available", extra={
                 'extra_data': {
@@ -123,13 +85,11 @@ class DeadLetterQueueProducer:
             return False
 
 def normalize_value(value, default=''):
-    """Normalizes value - trimming and converting to string"""
     if value is None:
         return default
     return str(value).strip()
 
 def validate_payload(payload):
-    """Validate required fields in payload including date format"""
     if not payload:
         logger.error("Empty payload", extra={
             'extra_data': {
@@ -139,53 +99,23 @@ def validate_payload(payload):
         })
         return False, "Empty payload"
     
-    required_fields = ['contract', 'date', 'price']
-    for field in required_fields:
-        if field not in payload:
-            logger.warning("Missing required field", extra={
-                'extra_data': {
-                    'event_type': 'validation_warning',
-                    'missing_field': field,
-                    'payload_keys': list(payload.keys())
-                }
-            })
-            return False, f"Missing required field: {field}"
+    kafka_manager = KafkaManager()
+    validator = UniversalDataValidator(kafka_manager, 'kafka_consumer')
+    is_valid, errors = validator.validate_for_kafka(payload)
     
-    date_value = payload.get('date')
-    if not validate_date_format(date_value):
-        logger.warning("Invalid date format", extra={
+    if not is_valid:
+        logger.warning("Validation failed", extra={
             'extra_data': {
-                'event_type': 'validation_warning',
-                'error_type': 'invalid_date_format',
-                'date_value': date_value
+                'event_type': 'validation_failed',
+                'errors': errors,
+                'payload_keys': list(payload.keys())
             }
         })
-        return False, f"Invalid date format: {date_value}. Expected YYYY-MM-DD"
+        return False, f"Validation errors: {', '.join(errors)}"
     
-    try:
-        validate(instance=payload, schema=DATA_SCHEMA)
-        return True, "Valid"
-    except jsonschema.ValidationError as e:
-        logger.warning("Schema validation failed", extra={
-            'extra_data': {
-                'event_type': 'schema_validation_failed',
-                'error': e.message,
-                'validator': e.validator
-            }
-        })
-        return False, f"Schema validation failed: {e.message}"
-    except Exception as e:
-        logger.warning("Validation error", extra={
-            'extra_data': {
-                'event_type': 'validation_error',
-                'error_type': 'general_validation_error',
-                'error': str(e)
-            }
-        })
-        return False, f"Validation error: {str(e)}"
+    return True, "Valid"
 
 def save_to_csv(data, filename='kafka_messages.csv'):
-    """Save data to CSV file with validation and normalization"""
     try:
         log_dir = '/app/logs'
         if not os.path.exists(log_dir):
@@ -237,8 +167,8 @@ def save_to_csv(data, filename='kafka_messages.csv'):
                 normalize_value(data.get('message_offset')),
                 normalize_value(data.get('message_count')),
                 normalize_value(payload.get('contract'), 'MISSING'),
-                normalize_value(payload.get('date'), 'MISSING'),
-                normalize_value(payload.get('price'), 'MISSING'),
+                normalize_value(payload.get('date')),
+                normalize_value(payload.get('price')),
                 normalize_value(payload.get('volume')),
                 normalize_value(payload.get('currency')),
                 normalize_value(payload.get('name_rus')),
@@ -271,7 +201,6 @@ def save_to_csv(data, filename='kafka_messages.csv'):
         return False
 
 def process_message(message, message_count, dlq_producer):
-    """Process single Kafka message with error handling"""
     start_time = datetime.now()
     try:
         try:
@@ -364,7 +293,6 @@ def process_message(message, message_count, dlq_producer):
         return False
 
 def run_consumer():
-    """Main consumer function with robust error handling"""
     logger.info("Starting Kafka consumer", extra={
         'extra_data': {
             'event_type': 'consumer_startup',

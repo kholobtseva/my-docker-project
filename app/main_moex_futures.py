@@ -9,6 +9,7 @@ from core.logging_utils import setup_logging
 from core.kafka_utils import KafkaManager
 from core.elastic_utils import ElasticsearchManager
 from core.logging_utils import setup_graylog_logger
+from core.validation_utils import UniversalDataValidator  # ← ДОБАВИЛИ
 
 # Константы и настройки
 health_status = 100
@@ -20,7 +21,7 @@ DB_CONFIG = {
     "port": "5432"
 }
 
-# Классы
+
 class SetInformation:
     @staticmethod
     def set(cursor, id_value, data):
@@ -55,31 +56,41 @@ class SetInformation:
 
 class Api:
     @staticmethod
-    def get_data_json(url, contract_name):
+    def get_data_json(url, contract_name, validator): 
         global health_status
         try:
             logger.info(f"Fetching MOEX-FUTURES data for {contract_name}")
             response = requests.get(url)
             
-            # Проверяем статус ответа
             if response.status_code != 200:
                 logger.error(f"HTTP {response.status_code} for {contract_name}")
                 return []
             
-            # Проверяем что ответ не пустой
             if not response.text.strip():
                 logger.warning(f"Empty response for {contract_name}")
                 return []
                 
             data = json.loads(response.text)
             
-            # Проверяем структуру исторических данных
+            # ВАЛИДАЦИЯ СТРУКТУРЫ API ОТВЕТА
             if 'history' not in data:
                 logger.warning(f"No history data found for {contract_name}")
+                validator.send_to_dead_letter_queue(
+                    {'url': url, 'contract': contract_name, 'response_structure': data.keys()},
+                    ["No 'history' field in API response"],
+                    'moex-futures-data',
+                    'moex_futures_api'
+                )
                 return []
                 
             if 'data' not in data['history']:
                 logger.warning(f"No data array in history for {contract_name}")
+                validator.send_to_dead_letter_queue(
+                    {'url': url, 'contract': contract_name, 'history_structure': data['history'].keys()},
+                    ["No 'data' field in history"],
+                    'moex-futures-data',
+                    'moex_futures_api'
+                )
                 return []
                 
             if len(data['history']['data']) == 0:
@@ -91,15 +102,24 @@ class Api:
 
         except json.JSONDecodeError as e:
             logger.error(f'MOEX-FUTURES JSON decode error for {contract_name}: {e}')
-            # Показываем начало ответа для отладки
-            if 'response' in locals():
-                logger.error(f'Response preview: {response.text[:200]}')
+            validator.send_to_dead_letter_queue(
+                {'url': url, 'contract': contract_name, 'raw_response': response.text[:500]},
+                [f"JSON decode error: {e}"],
+                'moex-futures-data',
+                'moex_futures_api'
+            )
             return []
         except Exception as e:
             logger.error(f'Unexpected MOEX-FUTURES error for {contract_name}: {str(e)}')
+            validator.send_to_dead_letter_queue(
+                {'url': url, 'contract': contract_name, 'error': str(e)},
+                [f"Unexpected error: {str(e)}"],
+                'moex-futures-data',
+                'moex_futures_api'
+            )
             return []
 
-# Функции
+
 def to_log_file(str_to_log, flag_print=False):
     """Функция логирования в файл"""
     if flag_print:
@@ -147,15 +167,14 @@ def generate_names(input_date):
 
     current_date = input_date
 
-    # ТОЛЬКО 8 ближайших месяцев вместо 13
     for i in range(8):
-        year = str(current_date.year)[-1]  # Последняя цифра года
+        year = str(current_date.year)[-1]
         month = current_date.month
         name_w4 = f"W4{dict_month[month]}{year}"
         name_br = f"BR{dict_month[month]}{year}"
         names.extend([name_w4, name_br])
 
-        if month == 12:  # Если декабрь, переходим на следующий год
+        if month == 12:
             current_date = current_date.replace(year=current_date.year+1, month=1, day=1)
         else:
             current_date = current_date.replace(month=current_date.month+1, day=1)
@@ -171,14 +190,12 @@ def insert_futures_if_not_exists():
         conn = psycopg2.connect(**DB_CONFIG)
         cursor = conn.cursor()
 
-        # Генерируем список имен фьючерсов от вчерашней даты
         name_list = generate_names(datetime.now() - timedelta(days=1))
         logger.info(f"Generated {len(name_list)} futures names: {name_list}")
 
         inserted_count = 0
         
         for name in name_list:
-            # Проверяем существует ли уже такой фьючерс
             cursor.execute(
                 "SELECT id FROM public.www_data_idx WHERE name_eng = %s AND source = 'MOEX-FUTURES'", 
                 (name,)
@@ -186,35 +203,31 @@ def insert_futures_if_not_exists():
             record = cursor.fetchone()
 
             if record is None:
-                # Получаем максимальный ID
                 cursor.execute("SELECT MAX(id) FROM public.www_data_idx")
                 max_result = cursor.fetchone()
                 max_id = max_result[0] if max_result[0] is not None else 0
                 new_id = max_id + 1
                 
-                # Определяем русское название
                 if name.startswith('W4'):
                     name_rus = 'Пшеница'
-                else:  # BR
+                else:
                     name_rus = 'Нефть Brent'
                 
-                # Правильный URL с board ID RFUD
                 url_template = 'https://iss.moex.com/iss/history/engines/futures/markets/forts/boards/RFUD/securities/'
                 
-                # Вставляем новый фьючерс
                 cursor.execute("""
                     INSERT INTO public.www_data_idx 
                     (id, mask, name_rus, name_eng, source, url, descr, date_upd) 
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     new_id, 
-                    None,  # mask
+                    None,
                     name_rus, 
-                    name,  # name_eng
-                    'MOEX-FUTURES',  # source
-                    url_template,  # url
-                    f'Фьючерс {name_rus} {name}',  # descr
-                    datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # date_upd
+                    name,
+                    'MOEX-FUTURES',
+                    url_template,
+                    f'Фьючерс {name_rus} {name}',
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 ))
                 
                 inserted_count += 1
@@ -231,10 +244,10 @@ def insert_futures_if_not_exists():
         logger.error(f"Error inserting futures contracts: {error}")
         return 0
 
-def sync_to_elasticsearch():
-    """Синхронизация MOEX-FUTURES данных с Elasticsearch"""
+def sync_to_elasticsearch(validator): 
+    """Синхронизация MOEX-FUTURES данных с Elasticsearch с валидацией"""
     try:
-        logger.info("Starting MOEX-FUTURES Elasticsearch synchronization...")
+        logger.info("🚀 Starting MOEX-FUTURES Elasticsearch synchronization...")
         
         conn = psycopg2.connect(**DB_CONFIG)
         cursor = conn.cursor()
@@ -250,45 +263,59 @@ def sync_to_elasticsearch():
         
         synced_count = 0
         kafka_sent_count = 0
+        validation_errors = 0
         
         for row in cursor.fetchall():
-            doc = {
-                'id_value': row[0],
-                'date': row[1].isoformat(),
-                'price': float(row[2]) if row[2] else None,
-                'volume': float(row[3]) if row[3] else None,
-                'currency': row[4],
-                'contract': row[5],
-                'name_rus': row[6],
-                'source': 'moex_futures',
-                'sync_timestamp': datetime.now().isoformat()
-            }
+            # Подготавливаем данные для Kafka
+            doc = validator.prepare_for_kafka(row)
+            doc['source'] = 'moex_futures'  # ← переопределяем source
             
-            # Отправка в Elasticsearch
+            # ВАЛИДАЦИЯ перед отправкой
+            is_valid, errors = validator.validate_for_kafka(doc)
+            
+            if not is_valid:
+                # Отправка в dead letter queue
+                dlq_result = validator.send_to_dead_letter_queue(
+                    doc,
+                    errors,
+                    'moex-futures-data',
+                    'moex_futures'
+                )
+                validation_errors += 1
+                logger.warning(f"MOEX-FUTURES validation failed for {doc.get('contract')}: {errors}")
+                continue
+            
+            
             es_result = es_manager.send_data(doc, 'agriculture-data')
+            if es_result:
+                synced_count += 1
+                logger.info(f"✅ ES SUCCESS: {doc.get('contract')} - {doc.get('date')}")
+            else:
+                logger.error(f"❌ ES FAILED: {doc.get('contract')}")
             
-            # Отправка в Kafka в отдельный топик
+            # Отправка в Kafka
             kafka_result = kafka_manager.send_message('moex-futures-data', doc)
             if kafka_result:
                 kafka_sent_count += 1
-                logger.info(f"SUCCESS MOEX-FUTURES data sent to Kafka: {doc.get('contract', 'Unknown')} - {doc.get('date', 'No date')}")
+                logger.info(f"✅ KAFKA SUCCESS: {doc.get('contract')} - {doc.get('date')}")
             
-            synced_count += 1
-        
         kafka_manager.flush()
-        logger.info(f"SUCCESS MOEX-FUTURES synchronization completed! ES: {synced_count}, Kafka: {kafka_sent_count}")
+        logger.info(f"🎉 MOEX-FUTURES SYNC COMPLETE! ES: {synced_count}, Kafka: {kafka_sent_count}, Validation errors: {validation_errors}")
         
         cursor.close()
         conn.close()
         
     except Exception as e:
-        logger.error(f"ERROR MOEX-FUTURES Elasticsearch synchronization error: {e}")
+        logger.error(f"💥 MOEX-FUTURES Elasticsearch synchronization error: {e}")
 
 # Основная функция MOEX-FUTURES
 def main_moex_futures():
     global health_status, kafka_manager, es_manager
      
     logger.info("MOEX-FUTURES script started")
+    
+    # Инициализация валидатора
+    validator = UniversalDataValidator(kafka_manager, 'moex_futures_script')
     
     try:
         to_log_file("\n\n\nSTART MOEX-FUTURES RUN SCRIPT\n", True)
@@ -311,44 +338,91 @@ def main_moex_futures():
         cursor.execute("SELECT id, name_eng, url FROM public.www_data_idx where source='MOEX-FUTURES'")
         rows = cursor.fetchall()
         
-        # 4. Генерируем список актуальных имен для фильтрации (от вчерашней даты)
+        # 4. Генерируем список актуальных имен для фильтрации
         current_name_list = generate_names(datetime.now() - timedelta(days=1))
         logger.info(f"Filtering by {len(current_name_list)} current contracts: {current_name_list}")
         
         total_processed = 0
         successful_contracts = 0
+        validation_errors = 0
         
-        # Период для данных - актуальные даты от сегодня
-        d1 = date.today() - timedelta(days=40)  # 40 дней назад
-        d2 = date.today()                       # Сегодня
+        d1 = date.today() - timedelta(days=40)
+        d2 = date.today()
         
         for row in rows:
-            # Фильтруем только актуальные контракты (исключаем последние 2 как в оригинале)
             if row[1] in current_name_list[:-2]:
-                # Правильный URL с board ID RFUD и косой чертой перед .json
                 url = f"{row[2]}{row[1]}/.json?from={str(d1)}&till={str(d2)}&history.columns=SECID,TRADEDATE,LOW,HIGH,SETTLEPRICE,VOLUME"
                 
                 to_log_file(f"\n-----\n{url}\n", True)  
                 
-                data_points = Api.get_data_json(url, row[1])
+                data_points = Api.get_data_json(url, row[1], validator)  # ← передаем validator
                 
                 if data_points:
                     successful_contracts += 1
                     logger.info(f"Processing {len(data_points)} records for {row[1]}")
                     
-                    # Определяем валюту по типу контракта
                     currency = "RUB" if row[1].startswith("W4") else "USD"
                     
-                    # Вставляем данные в БД
                     for data_point in data_points:
-                        data = []
-                        data.append(row[0])  # id
-                        data.append(data_point[1])  # TRADEDATE
-                        data.append(data_point[2])  # LOW (min_val)
-                        data.append(data_point[3])  # HIGH (max_val)  
-                        data.append(data_point[4])  # SETTLEPRICE (avg_val)
-                        data.append(data_point[5])  # VOLUME
-                        data.append(currency)  # определяем валюту
+                        # ВАЛИДАЦИЯ СТРУКТУРЫ MOEX-FUTURES API данных
+                        is_valid_structure, structure_errors = validator.validate_basic_structure(data_point, 'moex_futures_api')
+                        
+                        if not is_valid_structure:
+                            validator.send_to_dead_letter_queue(
+                                {'contract': row[1], 'raw_data': data_point},
+                                structure_errors,
+                                'moex-futures-data',
+                                'moex_futures_api'
+                            )
+                            validation_errors += 1
+                            continue
+                        
+                        # ВАЛИДАЦИЯ ДАТЫ
+                        is_valid_date, date_error = validator.validate_date_field(data_point[1], 'TRADEDATE')
+                        if not is_valid_date:
+                            validator.send_to_dead_letter_queue(
+                                {'contract': row[1], 'raw_data': data_point},
+                                [date_error],
+                                'moex-futures-data',
+                                'moex_futures_api'
+                            )
+                            validation_errors += 1
+                            continue
+                        
+                        # КОНВЕРТАЦИЯ В СТРУКТУРИРОВАННЫЙ ФОРМАТ
+                        try:
+                            structured_data = validator.convert_moex_futures_to_structured(data_point, row[0], currency)
+                        except ValueError as e:
+                            validator.send_to_dead_letter_queue(
+                                {'contract': row[1], 'raw_data': data_point},
+                                [str(e)],
+                                'moex-futures-data',
+                                'moex_futures_api'
+                            )
+                            validation_errors += 1
+                            continue
+                        
+                        # ВАЛИДАЦИЯ СТРУКТУРИРОВАННЫХ ДАННЫХ
+                        is_valid_structured, structured_errors = validator.validate_basic_structure(structured_data, 'structured')
+                        if not is_valid_structured:
+                            validator.send_to_dead_letter_queue(
+                                structured_data,
+                                structured_errors,
+                                'moex-futures-data',
+                                'moex_futures_structured'
+                            )
+                            validation_errors += 1
+                            continue
+                        
+                        data = [
+                            structured_data['id_value'],
+                            structured_data['date_val'],
+                            structured_data['min_val'],
+                            structured_data['max_val'],
+                            structured_data['avg_val'],
+                            structured_data['volume'],
+                            structured_data['currency']
+                        ]
                         
                         try:
                             SetInformation().set(cursor, row[0], data)
@@ -359,29 +433,28 @@ def main_moex_futures():
                 else:
                     logger.warning(f"No data for {row[1]}")
     
-        # Комитим изменения и закрываем соединение
         conn.commit()
         cursor.close()
         conn.close()
         
-        # Синхронизируем с Elasticsearch
-        sync_to_elasticsearch()
+        # Синхронизируем с Elasticsearch (передаем валидатор)
+        sync_to_elasticsearch(validator)
         
-        # Обновляем статус (используем отдельный ID для MOEX-FUTURES)
-        set_status_robot(1008, health_status, '')
+        # Обновляем статус
+        status_text = f'Processed: {total_processed}, Validation errors: {validation_errors}'
+        set_status_robot(1008, health_status, status_text)
         
         to_log_file("\nFINISH MOEX-FUTURES RUN SCRIPT\n", True)
-        logger.info(f"MOEX-FUTURES script completed: {total_processed} records from {successful_contracts} contracts")
+        logger.info(f"MOEX-FUTURES script completed: {total_processed} records from {successful_contracts} contracts, validation errors: {validation_errors}")
         
     except Exception as e:
         logger.error("Error in MOEX-FUTURES main", extra={'error': str(e)})
         print(f"MOEX-FUTURES Error: {e}")
         health_status = 0
-        set_status_robot(1008, health_status, '')
+        set_status_robot(1008, health_status, f'Runtime error: {e}')
 
 # Точка входа
 if __name__ == "__main__":
-    # Инициализация логирования и менеджеров
     logger = setup_logging('moex_futures_script')
     graylog_logger = setup_graylog_logger('moex_futures_script')
     kafka_manager = KafkaManager()
