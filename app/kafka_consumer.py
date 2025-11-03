@@ -200,24 +200,70 @@ def save_to_csv(data, filename='kafka_messages.csv'):
         })
         return False
 
+def safe_decode_message_value(message_value):
+    """Безопасно декодирует значение сообщения Kafka"""
+    if message_value is None:
+        return None
+    try:
+        return message_value.decode('utf-8')
+    except Exception as e:
+        try:
+            return message_value.decode('utf-8', errors='replace')
+        except Exception:
+            return f"Unable to decode message value: {str(e)}"
+
 def process_message(message, message_count, dlq_producer):
     start_time = datetime.now()
+    
+    # Проверка на пустое сообщение
+    if message.value is None:
+        logger.warning("Received empty message", extra={
+            'extra_data': {
+                'event_type': 'empty_message_received',
+                'message_count': message_count,
+                'offset': message.offset
+            }
+        })
+        dlq_producer.send_to_dlq(
+            original_message=None,
+            error_reason="Empty message (None value)",
+            raw_value=None
+        )
+        return False
+    
     try:
+        # Безопасное декодирование
+        message_text = safe_decode_message_value(message.value)
+        if message_text is None:
+            logger.error("Failed to decode message value", extra={
+                'extra_data': {
+                    'event_type': 'message_decode_failed',
+                    'message_count': message_count,
+                    'offset': message.offset
+                }
+            })
+            dlq_producer.send_to_dlq(
+                original_message=None,
+                error_reason="Failed to decode message value",
+                raw_value=str(message.value)[:500] if message.value else "No value"
+            )
+            return False
+        
         try:
-            data = json.loads(message.value.decode('utf-8'))
+            data = json.loads(message_text)
         except json.JSONDecodeError as e:
             logger.error("JSON decode error", extra={
                 'extra_data': {
                     'event_type': 'json_decode_error',
                     'message_count': message_count,
                     'error': str(e),
-                    'raw_value_preview': message.value.decode('utf-8', errors='replace')[:200]
+                    'raw_value_preview': message_text[:200] if message_text else "EMPTY"
                 }
             })
             dlq_producer.send_to_dlq(
                 original_message=None,
                 error_reason=f"JSON decode error: {str(e)}",
-                raw_value=message.value.decode('utf-8', errors='replace')[:500]
+                raw_value=message_text[:500] if message_text else "EMPTY"
             )
             return False
         
@@ -237,7 +283,7 @@ def process_message(message, message_count, dlq_producer):
             dlq_producer.send_to_dlq(
                 original_message=data,
                 error_reason=validation_msg,
-                raw_value=str(data)[:500]
+                raw_value=message_text[:500] if message_text else "EMPTY"
             )
             return False
         
@@ -275,6 +321,10 @@ def process_message(message, message_count, dlq_producer):
             
     except Exception as e:
         processing_time = (datetime.now() - start_time).total_seconds() * 1000
+        
+        # Безопасное получение raw_value для логирования
+        raw_value = safe_decode_message_value(message.value) if hasattr(message, 'value') and message.value else "EMPTY_MESSAGE"
+        
         logger.error("Message processing error", extra={
             'extra_data': {
                 'event_type': 'message_processing_error',
@@ -285,10 +335,11 @@ def process_message(message, message_count, dlq_producer):
                 'contract': data.get('contract') if 'data' in locals() else 'unknown'
             }
         })
+        
         dlq_producer.send_to_dlq(
-            original_message=None,
+            original_message=data if 'data' in locals() else None,
             error_reason=f"Processing error: {str(e)}",
-            raw_value=message.value.decode('utf-8', errors='replace')[:500] if hasattr(message, 'value') else "No message value"
+            raw_value=raw_value[:500] if raw_value else "No message value"
         )
         return False
 
@@ -395,6 +446,9 @@ def run_consumer():
                         }
                     })
             except Exception as e:
+                # Безопасное получение raw_value для критических ошибок
+                raw_value = safe_decode_message_value(message.value) if hasattr(message, 'value') and message.value else "EMPTY_MESSAGE"
+                
                 logger.error("Failed to process message", extra={
                     'extra_data': {
                         'event_type': 'message_processing_critical_error',
@@ -402,11 +456,11 @@ def run_consumer():
                         'error': str(e)
                     }
                 })
-                raw_value = message.value.decode('utf-8', errors='replace')[:500] if hasattr(message, 'value') else "No message value"
+                
                 dlq_producer.send_to_dlq(
                     original_message=None,
                     error_reason=f"Message processing failed: {str(e)}",
-                    raw_value=raw_value
+                    raw_value=raw_value[:500] if raw_value else "No message value"
                 )
                 continue
                 
