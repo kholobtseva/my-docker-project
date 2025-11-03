@@ -14,7 +14,7 @@
 1. Проверить статус контейнеров: `docker-compose ps`.  
    ER: Все контейнеры в статусе "Up" 
 2. Проверить список топиков: `docker-compose exec kafka kafka-topics --list --bootstrap-server localhost:9092`.  
-   ER: Топик market-data присутствует в списке.
+   ER: Топики __consumer_offsets, market-data, moex-futures-data, moex-market-data присутствуют в списке.
 3. Проверить доступность Kafdrop: http://localhost:9000.  
    ER: Kafdrop доступен и отображает топики
 
