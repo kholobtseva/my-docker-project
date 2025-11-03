@@ -210,6 +210,23 @@ def save_to_csv(data, filename='kafka_messages_futures.csv'):
 def process_message(message, message_count, dlq_producer):
     """Process single Kafka message with error handling"""
     start_time = datetime.now()
+    
+    # ДОБАВЛЕНО: обработка пустых сообщений
+    if message.value is None:
+        logger.warning("Received empty message", extra={
+            'extra_data': {
+                'event_type': 'empty_message_received',
+                'message_count': message_count,
+                'offset': message.offset
+            }
+        })
+        dlq_producer.send_to_dlq(
+            original_message=None,
+            error_reason="Empty message (None value)",
+            raw_value=None
+        )
+        return False
+    
     try:
         try:
             data = json.loads(message.value.decode('utf-8'))
